@@ -49,7 +49,7 @@ function finRetractation(presentation) {
 /* ---------- État ---------- */
 const DEFAULT_SETTINGS = {
   agent: { civ: '', prenom: '', nom: '', statut: 'Agent commercial indépendant (mandataire)', reseau: '', agence: '', carte: '', rsac: '', email: '', tel: '', adresse: '', signature: '' },
-  gmailClientId: '', tplOverrides: {}, customTemplates: [], onboarded: false,
+  tplOverrides: {}, customTemplates: [], onboarded: false,
 };
 const App = { dossiers: [], settings: structuredClone(DEFAULT_SETTINGS), current: null, files: [], tab: 'parcours', canal: 'notaire', open: {} };
 
@@ -318,7 +318,7 @@ function viewDashboard() {
   const welcome = !App.settings.agent.nom ? `<div class="banner">👋 Bienvenue ! Commencez par renseigner <a href="#/parametres">votre profil</a> (il alimente vos signatures, offres et mails), puis créez votre premier dossier — ou <button class="link" data-a="demo">chargez un dossier d’exemple</button>.</div>` : '';
   return `${welcome}
   <div class="page-head"><div><h1>Mes ventes en copropriété</h1><p class="muted">${actifs.length} dossier(s) actif(s) · données stockées uniquement sur cet appareil</p></div>
-    <div class="row gap wrap">${!Gmail.isConnected() && location.protocol !== 'file:' && gmailClientId() ? gmailBox(true) : ''}<button class="btn ghost" data-a="importPdf" data-kind="mandat">📄 Importer un mandat PDF</button><button class="btn primary" data-a="newDossier">＋ Nouveau dossier</button></div></div>
+    <div class="row gap wrap"><button class="btn ghost" data-a="importPdf" data-kind="mandat">📄 Importer un mandat PDF</button><button class="btn primary" data-a="newDossier">＋ Nouveau dossier</button></div></div>
   <div class="kpis">${kpi(actifs.length, 'Dossiers actifs')}${kpi(ds.filter(d => d.phase === 'offre').length, 'Offres / pré-compromis')}${kpi(ds.filter(d => d.phase === 'compromis').length, 'Compromis signés')}${kpi(ech.filter(e => daysUntil(e.date) < 0).length, 'Échéances dépassées', ech.some(e => daysUntil(e.date) < 0) ? 'alert' : '')}</div>
   <div class="grid2">
     <section class="card"><h2>⏰ Échéances & relances (30 jours)</h2>${ech.length ? `<ul class="ech">${ech.slice(0, 14).map(e => {

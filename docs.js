@@ -83,122 +83,76 @@ function canalEmails(d, c) {
   const extra = (d.mails[c].to || '').split(/[,;\s]+/);
   return [...new Set(list.concat(extra).map(x => (x || '').trim().toLowerCase()).filter(x => x.includes('@')))];
 }
-function defaultQuery(d, c) {
-  const em = canalEmails(d, c);
-  if (!em.length) return '';
-  return '{' + em.map(e => `from:${e} to:${e} cc:${e}`).join(' ') + '} newer_than:1y';
-}
+const copyBtn = (v, label = '📋') => `<button class="btn small ghost" data-a="copy" data-v="${esc(v)}" title="Copier">${label}</button>`;
 function tabMails(d) {
-  const c = App.canal, M = d.mails[c], em = canalEmails(d, c);
-  const msgs = M.messages.slice().sort((a, b) => b.date - a.date);
-  const connected = Gmail.isConnected();
+  const c = App.canal, em = canalEmails(d, c), lab = CANAUX.find(x => x.id === c).label;
+  const msgs = d.mails[c].messages.slice().sort((a, b) => b.date - a.date);
   return `<div class="seg big">${CANAUX.map(x => `<button class="${c === x.id ? 'on' : ''}" data-a="setCanal" data-c="${x.id}">${x.icon} ${x.label} <small>${d.mails[x.id].messages.length || ''}</small></button>`).join('')}</div>
   <section class="card">
+    <p class="small muted">Préparez vos mails ici, copiez en un clic l’adresse, l’objet et le message, puis collez-les dans votre messagerie. Collez aussi les mails reçus pour garder tout l’historique du dossier au même endroit.</p>
     <div class="grid4">
-      <div class="field span2"><span>Contacts du fil « ${CANAUX.find(x => x.id === c).label} »</span><div class="readout">${em.length ? em.map(esc).join(', ') : '<span class="muted">Aucun e-mail : renseignez la fiche ou ajoutez ci-contre.</span>'}</div></div>
-      ${field('Adresses supplémentaires', `mails.${c}.to`, { ph: 'a@x.fr, b@y.fr', r: true })}
-      <div class="field"><span>Gmail</span>${connected ? `<div class="readout">🟢 ${esc(Gmail.email || 'connecté')}</div>` : gmailBox(true)}</div>
-      ${field('Recherche Gmail de ce fil', `mails.${c}.query`, { cls: 'span3', ph: defaultQuery(d, c) || 'from:… OR subject:…', help: 'Laissez vide pour utiliser automatiquement les contacts ci-dessus. Syntaxe de recherche Gmail.' })}
-      <div class="field"><span>&nbsp;</span><button class="btn ${connected ? 'primary' : ''}" data-a="syncCanal">🔄 Synchroniser</button><small>${M.lastSync ? 'Dernière synchro : ' + fdatetime(M.lastSync) : ''}</small></div>
+      <div class="field span2"><span>Adresses du fil « ${lab} »</span><div class="readout">${em.length ? `<div class="row gap wrap">${em.map(e => `<span class="fchip">${esc(e)} ${copyBtn(e)}</span>`).join('')}${em.length > 1 ? copyBtn(em.join(', '), '📋 Toutes') : ''}</div>` : '<span class="muted">Aucune adresse : renseignez la fiche ou ajoutez-en ci-contre.</span>'}</div></div>
+      ${field('Adresses supplémentaires', `mails.${c}.to`, { cls: 'span2', ph: 'a@x.fr, b@y.fr', r: true })}
     </div>
-    <div class="row gap wrap"><button class="btn primary" data-a="compose" data-canal="${c}">✉️ Rédiger un mail</button><button class="btn" data-a="pasteMail">📋 Coller un mail reçu</button>
+    <div class="row gap wrap"><button class="btn primary" data-a="compose" data-canal="${c}">✉️ Rédiger un mail</button><button class="btn" data-a="pasteMail">📥 Coller un mail reçu</button>
       ${allTemplates().filter(t => t.canal === c && t.id !== 'ped_commande').slice(0, 4).map(t => `<button class="btn small ghost" data-a="compose" data-tpl="${t.id}">${esc(t.titre)}</button>`).join('')}</div>
   </section>
-  <section class="msgs">${msgs.length ? msgs.map(m => msgCard(m)).join('') : '<p class="muted center">Aucun message dans ce fil. Synchronisez Gmail ou collez un mail.</p>'}</section>`;
+  <section class="msgs">${msgs.length ? msgs.map(m => msgCard(m)).join('') : '<p class="muted center">Aucun message dans ce fil. Rédigez un mail ou collez un mail reçu.</p>'}</section>`;
 }
 function msgCard(m) {
-  const open = App.open['m_' + m.id];
+  const open = App.open['m_' + m.id], sent = m.source === 'brouillon';
   return `<article class="msg ${open ? 'open' : ''}"><header data-a="toggleMsg" data-id="${m.id}">
-    <span class="src ${m.source}">${m.source === 'gmail' ? 'Gmail' : m.source === 'brouillon' ? 'Brouillon' : 'Collé'}</span>
-    <b>${esc(m.subject)}</b><span class="muted small">${esc(m.from)} · ${fdatetime(m.date)}</span>
+    <span class="src ${m.source}">${sent ? 'Envoyé / préparé' : 'Reçu'}</span>
+    <b>${esc(m.subject)}</b><span class="muted small">${esc(sent ? 'À : ' + (m.to || '') : m.from)} · ${fdatetime(m.date)}</span>
     ${!open ? `<p class="small muted">${esc((m.snippet || m.body || '').slice(0, 160))}</p>` : ''}</header>
-    ${open ? `<div class="mbody">${m.to ? `<p class="small muted">À : ${esc(m.to)}</p>` : ''}<pre>${esc(m.body)}</pre>
-      ${(m.attachments || []).length ? `<div class="files">${m.attachments.map((a, i) => `<span class="fchip">📎 ${esc(a.name)} <small>${fsize(a.size || 0)}</small> <button class="btn small" data-a="saveAtt" data-id="${m.id}" data-i="${i}">Enregistrer dans les pièces</button></span>`).join('')}</div>` : ''}
-      <div class="row gap"><button class="btn small" data-a="reply" data-id="${m.id}">↩️ Répondre</button><button class="btn small" data-a="copyMsg" data-id="${m.id}">📋 Copier</button><button class="btn small ghost" data-a="delMsg" data-id="${m.id}">Retirer du fil</button></div></div>` : ''}</article>`;
+    ${open ? `<div class="mbody"><pre>${esc(m.body)}</pre>
+      <div class="row gap wrap"><button class="btn small" data-a="reply" data-id="${m.id}">↩️ Répondre</button><button class="btn small" data-a="copyMsg" data-id="${m.id}">📋 Copier</button><button class="btn small ghost" data-a="delMsg" data-id="${m.id}">Retirer du fil</button></div></div>` : ''}</article>`;
 }
 function findMsg(d, id) { for (const c of CANAUX) { const m = d.mails[c.id].messages.find(x => x.id === id); if (m) return { m, c: c.id }; } return {}; }
 
-async function syncCanal(d, c) {
-  if (!Gmail.isConnected()) { toast('Cliquez d’abord sur « Connecter mon Gmail ».', 'err'); return; }
-  const q = d.mails[c].query || defaultQuery(d, c);
-  if (!q) { toast('Aucun contact ni recherche pour ce fil.', 'err'); return; }
-  toast('Synchronisation en cours…');
-  try {
-    const threads = await Gmail.searchThreads(q, 12);
-    const M = d.mails[c]; let added = 0;
-    for (const t of threads) {
-      const msgs = await Gmail.getThread(t.id);
-      for (const m of msgs) {
-        m.body = (m.body || '').slice(0, 15000);
-        const i = M.messages.findIndex(x => x.id === m.id);
-        if (i >= 0) M.messages[i] = m; else { M.messages.push(m); added++; }
-      }
-    }
-    M.lastSync = Date.now();
-    log(d, `Synchro Gmail « ${c} » : ${threads.length} fil(s), ${added} nouveau(x) message(s)`);
-    toast(`${added} nouveau(x) message(s)`);
-    rerender();
-  } catch (e) { toast(e.message, 'err'); }
-}
-
-/* ---------- Rédaction ---------- */
+/* ---------- Rédaction : copier en un clic ---------- */
 function openCompose(d, opts = {}) {
   const tpls = allTemplates().filter(t => t.id !== 'ped_commande');
-  let tpl = opts.tpl ? tpls.find(t => t.id === opts.tpl) : null;
+  const tpl = opts.tpl ? tpls.find(t => t.id === opts.tpl) : null;
   const canal = opts.canal || (tpl && tpl.canal) || App.canal || 'vendeur';
-  App.compose = { canal, threadId: opts.threadId || '', inReplyTo: opts.inReplyTo || '', references: opts.references || '' };
+  App.compose = { canal, saved: false };
   const to = opts.to ?? canalEmails(d, canal).join(', ');
   const subject = opts.subject ?? (tpl ? fill(tpl.sujet, d) : '');
   const body = opts.body ?? (tpl ? fill(tpl.corps, d) : '\n\n' + signature());
-  const preAttach = new Set(opts.attach || []);
-  const connected = Gmail.isConnected();
+  const cp = (how, l = '📋 Copier') => `<button class="btn small" data-a="composeDo" data-how="${how}">${l}</button>`;
   openModal(opts.title || 'Rédiger un mail', `
     <div class="grid4">
       <label class="field span2"><span>Modèle</span><select id="c_tpl" data-a-change="composeTpl"><option value="">— Aucun —</option>
         ${CANAUX.map(cn => `<optgroup label="${cn.label}">${tpls.filter(t => t.canal === cn.id).map(t => `<option value="${t.id}" ${tpl && tpl.id === t.id ? 'selected' : ''}>${esc(t.titre)}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <label class="field span2"><span>Fil du dossier</span><select id="c_canal">${CANAUX.map(cn => `<option value="${cn.id}" ${cn.id === canal ? 'selected' : ''}>${cn.label}</option>`).join('')}</select></label>
-      <label class="field span2"><span>À</span><input id="c_to" value="${esc(to)}"></label>
-      <label class="field span2"><span>Cc</span><input id="c_cc" value="${esc(opts.cc || '')}"></label>
-      <label class="field span4"><span>Objet</span><input id="c_subject" value="${esc(subject)}"></label>
-      <label class="field span4"><span>Message ${App.compose.threadId ? '<em class="small">(réponse dans le fil Gmail)</em>' : ''}</span><textarea id="c_body" rows="16">${esc(body)}</textarea>
-        <small>Relisez et complétez les zones entre crochets [ ] avant l’envoi.</small></label>
+      <div class="field span4"><span>Destinataire(s)</span><div class="cfield"><input id="c_to" value="${esc(to)}">${cp('to')}</div></div>
+      <div class="field span4"><span>Objet</span><div class="cfield"><input id="c_subject" value="${esc(subject)}">${cp('subject')}</div></div>
+      <div class="field span4"><span>Message</span><textarea id="c_body" rows="16">${esc(body)}</textarea>
+        <small>Relisez et complétez les zones entre crochets [ ] avant l’envoi.</small></div>
     </div>
-    ${App.files.length ? `<details ${preAttach.size ? 'open' : ''}><summary>📎 Joindre des pièces du dossier (brouillon Gmail uniquement)</summary><div class="attach-list">
-      ${App.files.map(f => `<label class="check"><input type="checkbox" class="c_att" value="${f.id}" ${preAttach.has(f.id) ? 'checked' : ''}> <span>${esc(f.name)} <small class="muted">${esc((pieceDef(f.pieceId) || {}).label || '')} · ${fsize(f.size)}</small></span></label>`).join('')}</div></details>` : ''}
     <div class="row gap wrap modal-actions">
-      <button class="btn primary" data-a="composeDo" data-how="draft" ${connected ? '' : 'disabled title="Connectez Gmail dans les paramètres"'}>⭐ Créer le brouillon Gmail</button>
-      <button class="btn" data-a="composeDo" data-how="gmailweb">Ouvrir dans Gmail</button>
-      <button class="btn" data-a="composeDo" data-how="mailto">Ma messagerie</button>
-      <button class="btn ghost" data-a="composeDo" data-how="copy">📋 Copier le texte</button></div>
-    ${connected ? '' : '<p class="small muted">Sans connexion Gmail : « Ouvrir dans Gmail » pré-remplit un nouveau message (sans pièces jointes), ou copiez le texte.</p>'}`, { wide: true });
+      <button class="btn primary" data-a="composeDo" data-how="body">📋 Copier le message</button>
+      <button class="btn" data-a="composeDo" data-how="all">📋 Tout copier (objet + message)</button>
+      <button class="btn ghost" data-a="composeDo" data-how="save">💾 Garder dans le fil et fermer</button></div>
+    <p class="small muted">Astuce : copiez l’adresse, collez-la dans votre messagerie, puis l’objet, puis le message. Le mail est gardé dans le fil du dossier dès que vous copiez le message.</p>`, { wide: true });
 }
 function composeValues() {
-  return { canal: $('#c_canal').value, to: $('#c_to').value.trim(), cc: $('#c_cc').value.trim(), subject: $('#c_subject').value, body: $('#c_body').value, att: $$('.c_att:checked').map(x => x.value) };
+  return { canal: $('#c_canal').value, to: $('#c_to').value.trim(), subject: $('#c_subject').value, body: $('#c_body').value };
 }
-async function composeDo(d, how) {
+function composeDo(d, how) {
   const v = composeValues();
-  if (how === 'copy') { copyText(`Objet : ${v.subject}\n\n${v.body}`); return; }
-  if (how === 'gmailweb') {
-    const u = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(v.to) + (v.cc ? '&cc=' + encodeURIComponent(v.cc) : '') + '&su=' + encodeURIComponent(v.subject) + '&body=' + encodeURIComponent(v.body);
-    window.open(u, '_blank', 'noopener');
-    if (v.att.length) toast('Pièces jointes non transmises par ce mode : joignez-les dans Gmail.', 'warn');
-  } else if (how === 'mailto') {
-    location.href = 'mailto:' + encodeURIComponent(v.to).replace(/%40/g, '@').replace(/%2C/g, ',') + '?subject=' + encodeURIComponent(v.subject) + (v.cc ? '&cc=' + encodeURIComponent(v.cc) : '') + '&body=' + encodeURIComponent(v.body);
-  } else if (how === 'draft') {
-    try {
-      const attachments = [];
-      for (const id of v.att) { const f = await Store.getFile(id); if (f) attachments.push({ name: f.name, type: f.type, blob: f.blob }); }
-      const total = attachments.reduce((s, a) => s + (a.blob.size || 0), 0);
-      if (total > 24e6) { toast('Pièces jointes trop lourdes (> 24 Mo). Utilisez un lien de partage.', 'err'); return; }
-      toast('Création du brouillon…');
-      await Gmail.createDraft({ to: v.to, cc: v.cc, subject: v.subject, body: v.body, threadId: App.compose.threadId, inReplyTo: App.compose.inReplyTo, references: App.compose.references, attachments });
-      toast('Brouillon créé dans Gmail ✔ — relisez-le et envoyez-le depuis Gmail.');
-    } catch (e) { toast(e.message, 'err'); return; }
+  if (how === 'to') return copyText(v.to);
+  if (how === 'subject') return copyText(v.subject);
+  if (how === 'body') copyText(v.body);
+  if (how === 'all') copyText(`Objet : ${v.subject}\n\n${v.body}`);
+  if (!App.compose.saved) {
+    App.compose.saved = true;
+    if (App.compose.onDone) App.compose.onDone();
+    d.mails[v.canal].messages.push({ id: 'b_' + uid(), source: 'brouillon', from: 'Moi', to: v.to, subject: v.subject, body: v.body, date: Date.now(), snippet: v.body.slice(0, 160) });
+    log(d, `Mail préparé (${CANAUX.find(c => c.id === v.canal).label}) : ${v.subject}`, 'mail');
+    saveDossier();
   }
-  if (App.compose.onDone) App.compose.onDone();
-  d.mails[v.canal].messages.push({ id: 'b_' + uid(), source: 'brouillon', from: 'Moi', to: v.to, subject: v.subject, body: v.body, date: Date.now(), snippet: v.body.slice(0, 160) });
-  log(d, `Mail préparé (${CANAUX.find(c => c.id === v.canal).label}) : ${v.subject}`, 'mail');
-  closeModal(); rerender();
+  if (how === 'save') { closeModal(); rerender(); }
 }
 
 /* =========================================================================
@@ -321,7 +275,7 @@ function tabPed(d) {
   <aside class="card sticky"><h2>Demande pré-remplie</h2>
     ${P.prestataire === 'copro-assistance' ? `<div class="row gap wrap"><button class="btn primary" data-a="pedCompose">✉️ Préparer le mail à ${COPRO_ASSISTANCE.nom}</button>
       <a class="btn" href="${COPRO_ASSISTANCE.urlPro}" target="_blank" rel="noopener">🌐 Commande en ligne (pros)</a><button class="btn ghost" data-a="pedCopy">📋 Copier</button></div>
-      <p class="small muted">Le mail joint automatiquement les pièces « pré-état daté » reçues (brouillon Gmail). Contact : ${COPRO_ASSISTANCE.email} · ${COPRO_ASSISTANCE.tel}</p>`
+      <p class="small muted">Pensez à joindre à votre mail les pièces « pré-état daté » reçues (onglet Pièces › ⋯ › Télécharger, ou export ZIP). Contact : ${COPRO_ASSISTANCE.email} · ${COPRO_ASSISTANCE.tel}</p>`
       : P.prestataire === 'syndic' ? `<p>Commande au syndic : demandez un devis écrit (tarif et délai) avant toute commande.</p><button class="btn" data-a="compose" data-tpl="syndic_documents">✉️ Écrire au syndic</button>`
       : `<p>Le vendeur réunit lui-même les informations : transmettez-lui la liste des pièces et la trame.</p><button class="btn" data-a="compose" data-tpl="vendeur_pieces">✉️ Liste des pièces au vendeur</button>`}
     <pre class="preview mono">${esc(pedRequestText(d))}</pre></aside></div>`;

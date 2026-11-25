@@ -201,6 +201,8 @@ select.status { width: auto; font-weight: 600; border-width: 1px; }
 .mbody pre, pre.preview { white-space: pre-wrap; word-wrap: break-word; font: inherit; font-size: .9rem; background: var(--surface-2); padding: 12px; border-radius: 8px; max-height: 420px; overflow: auto; }
 .src { font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 8px; background: var(--surface-2); color: var(--muted); }
 .src.gmail { background: #fde8e6; color: #b3261e; } .src.brouillon { background: var(--violet-soft); color: var(--violet); }
+.cfield { display: flex; gap: 6px; align-items: center; } .cfield input { flex: 1; }
+.fchip .btn.small { padding: 2px 7px; }
 .attach-list { max-height: 200px; overflow: auto; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-top: 6px; }
 .mono { font-family: Consolas, "Cascadia Mono", Menlo, monospace !important; font-size: .82rem !important; }
 

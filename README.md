@@ -16,7 +16,7 @@ Les contenus métier sont issus des guides pratiques de [Copro-Assistance](https
 | **Pièces** | Plus de 50 pièces types (vendeur, diagnostics, copropriété, acquéreur, transaction) avec statut, dates, exercice, validité des diagnostics. Glisser-déposer avec **classement automatique** d'après le nom du fichier |
 | **Entretien vendeur** | Le questionnaire de prise de mandat (bien, copropriété, usage, calendrier) avec réponses « à vérifier » |
 | **Analyse copro** | 12 signaux à traiter avant commercialisation, **fiches de lecture d'appels de fonds** (calcul des quotes-parts), **contrôle express des annexes comptables**, mentions copropriété de l'annonce |
-| **Mails — 5 fils par bien** | Notaire, syndic, vendeur, acquéreur, autre. Synchronisation Gmail, collage manuel, réponses dans le fil, enregistrement des pièces jointes dans le dossier |
+| **Mails — 5 fils par bien** | Notaire, syndic, vendeur, acquéreur, autre. Copie en un clic de l'adresse, de l'objet et du message ; mails reçus collés pour garder l'historique |
 | **Modèles de mails** | 20 modèles pré-remplis (pièces manquantes, accès extranet, documents manquants sur l'extranet, transmission au notaire…), modifiables, avec variables |
 | **Offre d'achat** | Générée depuis la fiche (prix en lettres, financement, conditions suspensives, mentions légales) → impression/PDF, Word, ou rangée dans les pièces |
 | **Pré-état daté** | Comparatif syndic / Copro-Assistance, état des pièces utiles, **demande pré-remplie** à Copro-Assistance avec les pièces jointes |
@@ -27,21 +27,18 @@ Les contenus métier sont issus des guides pratiques de [Copro-Assistance](https
 ## Confidentialité
 
 - **Aucun serveur, aucun compte** : toutes les données (dossiers et fichiers) restent dans le navigateur de l'utilisateur (IndexedDB).
-- Gmail est optionnel ; le jeton d'accès reste dans l'onglet et l'application **n'envoie jamais de mail** : elle crée des brouillons que l'agent relit et envoie.
+- Aucune connexion à votre messagerie : l'application prépare les mails, vous les copiez et les envoyez vous-même.
 - Sauvegarde/restauration complète en un fichier JSON (Paramètres).
 
 ## ⬇️ Installer sur votre ordinateur (2 minutes)
 
 1. **[Télécharger CoproVente (ZIP)](https://github.com/COPROASSISTANCE/coprovente/archive/refs/heads/main.zip)** et décompresser le dossier où vous voulez (ex. *Documents*).
-2. Double-cliquer sur **« Lancer CoproVente.bat »** (Windows) ou **« Lancer CoproVente (Mac).command »** (Mac). L'application s'ouvre dans votre navigateur.
-3. Cliquer sur **« Connecter mon Gmail »** et choisir votre compte.
+2. Double-cliquer sur **`index.html`** : l'application s'ouvre dans votre navigateur. Rien à installer.
 
 C'est votre copie : vous pouvez la modifier librement (nom, couleurs, logo dans `config.js` ; étapes, pièces et modèles de mails dans `data.js`) — voir **[PERSONNALISER.md](PERSONNALISER.md)**.
 
 Vous pouvez aussi l'essayer en ligne sans rien installer : https://coproassistance.github.io/coprovente/
 
-## Connexion Gmail
-Voir [GMAIL.md](GMAIL.md).
 
 ## Structure
 ```
@@ -50,7 +47,6 @@ data.js         ← référentiel métier : étapes, pièces, questions, mails, 
 index.html      page unique
 app.css         styles (clair/sombre, mobile)
 store.js        stockage local (IndexedDB)
-gmail.js        connexion Gmail (optionnelle)
 app.js          cœur, tableau de bord, parcours, fiche, pièces, analyse
 docs.js         mails, offre, pré-état daté, notaire, ZIP
 pages.js        modèles, outils, guides, paramètres, import PDF, démarrage

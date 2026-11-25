@@ -96,26 +96,12 @@ function viewParametres() {
     ${field('Réseau / agence', 'agent.reseau', s)}${field('N° RSAC', 'agent.rsac', s)}${field('Carte pro (du titulaire)', 'agent.carte', { ...s, ph: 'CPI xxxx xxxx xxx xxx' })}${field('Téléphone', 'agent.tel', s)}
     ${field('E-mail', 'agent.email', { ...s, type: 'email' })}${field('Adresse', 'agent.adresse', { ...s, cls: 'span3' })}
     ${field('Signature des mails (laisser vide pour la générer)', 'agent.signature', { ...s, area: true, cls: 'span4', rows: 4, ph: signature() })}</div></section>
-  <section class="card"><h2>✉️ Connexion Gmail</h2>
-    <p>Connectez <b>votre</b> boîte Gmail pour <b>synchroniser jusqu’à 5 fils par bien</b> (notaire, syndic, vendeur, acquéreur, autre) et <b>créer des brouillons</b> avec pièces jointes. L’application n’envoie jamais de mail à votre place, et l’accès reste dans ce navigateur.</p>
-    ${gmailBox()}
-    <details class="small"><summary>Avancé : utiliser mon propre identifiant Google</summary><div class="grid4">${field('Client ID OAuth Google', 'gmailClientId', { ...s, cls: 'span4', ph: 'xxxxxxxx.apps.googleusercontent.com', help: 'Facultatif — remplace l’identifiant fourni avec l’application. Voir GMAIL.md.' })}</div></details>
-    <p class="small muted">Sans connexion, tout fonctionne quand même : « Ouvrir dans Gmail » pré-remplit un message, et vous pouvez coller les mails reçus dans chaque fil.</p></section>
   <section class="card"><h2>💾 Sauvegarde & transfert</h2>
     <p>Vos données ne sont stockées que sur cet appareil. Exportez régulièrement une sauvegarde (dossiers + fichiers), par exemple vers votre Drive.</p>
     <div class="row gap wrap"><button class="btn primary" data-a="backup">⬇️ Exporter une sauvegarde complète</button><label class="btn">⬆️ Restaurer une sauvegarde<input type="file" accept=".json,application/json" hidden data-restore></label>
     <button class="btn" data-a="demo">Charger un dossier d’exemple</button></div></section>
   <section class="card"><h2>ℹ️ À propos</h2><p>CoproVente — application libre et gratuite (licence MIT) pour les agents et mandataires immobiliers. Contenus métier issus des guides pratiques de ${COPRO_ASSISTANCE.nom}. Informations générales : adaptez toujours au bien, à la copropriété et aux demandes de l’étude notariale.</p>
     <p class="right"><button class="btn danger small" data-a="wipe">Effacer toutes les données de cet appareil</button></p></section>`;
-}
-
-/* ---------- Connexion Gmail ---------- */
-const gmailClientId = () => (App.settings.gmailClientId || '').trim() || ((typeof APP_CONFIG === 'object' && APP_CONFIG.gmailClientId) || '').trim();
-function gmailBox(compact) {
-  if (Gmail.isConnected()) return `<div class="row gap wrap"><span class="readout">🟢 Gmail connecté : <b>${esc(Gmail.email || '')}</b></span><button class="btn small" data-a="gmailOff">Déconnecter</button></div>`;
-  if (location.protocol === 'file:') return `<div class="warn">Pour connecter Gmail, fermez cette page et ouvrez l’application avec <b>« Lancer CoproVente »</b> (double-clic sur le fichier dans le dossier de l’application).</div>`;
-  if (!gmailClientId()) return `<div class="warn">Aucun identifiant Google n’est configuré dans cette copie de l’application (fichier <code>config.js</code>, voir GMAIL.md).</div>`;
-  return `<button class="btn primary${compact ? ' small' : ''}" data-a="gmailOn">🔗 Connecter mon Gmail</button>`;
 }
 
 /* ---------- Import PDF (mandat / offre) ---------- */
@@ -263,7 +249,7 @@ async function restore(file) {
     if (!confirmBox(`Restaurer ${data.dossiers.length} dossier(s) et ${data.files.length} fichier(s) ? Les dossiers portant le même identifiant seront remplacés.`)) return;
     for (const d of data.dossiers) await Store.putDossier(d);
     for (const f of data.files) { const blob = await (await fetch(f.data)).blob(); delete f.data; await Store.putFile({ ...f, blob }); }
-    if (data.settings) { App.settings = { ...structuredClone(DEFAULT_SETTINGS), ...data.settings, gmailClientId: App.settings.gmailClientId || data.settings.gmailClientId }; saveSettings(); }
+    if (data.settings) { App.settings = { ...structuredClone(DEFAULT_SETTINGS), ...data.settings }; saveSettings(); }
     App.dossiers = await Store.allDossiers();
     toast('Sauvegarde restaurée ✔'); location.hash = '#/';  render();
   } catch (e) { toast(e.message, 'err'); }
@@ -384,7 +370,7 @@ const ACT = {
   reply(el) {
     const d = App.current, { m, c } = findMsg(d, el.dataset.id);
     const addr = (m.from.match(/<([^>]+)>/) || [, m.from])[1];
-    openCompose(d, { canal: c, to: m.source === 'brouillon' ? m.to : addr, subject: /^re\s*:/i.test(m.subject) ? m.subject : 'Re: ' + m.subject, threadId: m.source === 'gmail' ? m.threadId : '', inReplyTo: m.messageId, references: m.references,
+    openCompose(d, { canal: c, to: m.source === 'brouillon' ? m.to : addr, subject: /^re\s*:/i.test(m.subject) ? m.subject : 'Re: ' + m.subject,
       body: `\n\n${signature()}\n\n> Le ${fdatetime(m.date)}, ${m.from} a écrit :\n${(m.body || '').split('\n').slice(0, 40).map(l => '> ' + l).join('\n')}`, title: 'Répondre' });
   },
   pasteMail() {
@@ -401,14 +387,6 @@ const ACT = {
     d.mails[c].messages.push({ id: 'p_' + uid(), source: 'manuel', from, subject: subj, body, snippet: body.slice(0, 160), date: new Date($('#p_date').value + 'T12:00:00').getTime() || Date.now() });
     log(d, `Mail ajouté au fil ${c} : ${subj}`, 'mail'); App.canal = c; closeModal(); rerender();
   },
-  async saveAtt(el) {
-    const d = App.current, { m } = findMsg(d, el.dataset.id), a = m.attachments[+el.dataset.i];
-    try {
-      const blob = await Gmail.getAttachment(m.id, a.attachmentId, a.type);
-      const file = new File([blob], a.name, { type: a.type });
-      await handleFiles([file], 'auto');
-    } catch (e) { toast(e.message, 'err'); }
-  },
   offreDo(el) {
     const d = App.current, html = docShell('Offre d’achat — ' + dossierTitle(d), offreBody(d)), name = `Offre_achat_${slug(names(d.acquereurs) || 'acquereur')}_${today()}`;
     if (el.dataset.how === 'print') printHtml(html);
@@ -417,14 +395,14 @@ const ACT = {
     if (d.phase === 'mandat' || d.phase === 'commercialisation') { d.phase = 'offre'; saveDossier(); }
   },
   pedCompose() {
-    const d = App.current, att = App.files.filter(f => (pieceDef(f.pieceId) || {}).ped).map(f => f.id);
-    openCompose(d, { canal: 'autre', to: COPRO_ASSISTANCE.email, subject: fill('Commande pré-état daté — {{adresse}} — lots {{lots}}', d), body: pedRequestText(d), attach: att, title: 'Demande de pré-état daté' });
+    const d = App.current;
+    openCompose(d, { canal: 'autre', to: COPRO_ASSISTANCE.email, subject: fill('Commande pré-état daté — {{adresse}} — lots {{lots}}', d), body: pedRequestText(d), title: 'Demande de pré-état daté' });
     App.compose.onDone = () => { if (!d.ped.commandeLe) d.ped.commandeLe = today(); };
   },
   pedCopy() { copyText(pedRequestText(App.current)); },
   notaireMail() {
     const d = App.current, t = allTemplates().find(x => x.id === 'notaire_transmission');
-    openCompose(d, { tpl: 'notaire_transmission', subject: fill(t.sujet, d), body: fill(t.corps, d), attach: App.files.map(f => f.id) });
+    openCompose(d, { tpl: 'notaire_transmission', subject: fill(t.sujet, d), body: fill(t.corps, d) });
   },
   noteDo(el) {
     const d = App.current, html = docShell('Note de transmission — ' + dossierTitle(d), noteBody(d));
@@ -442,8 +420,7 @@ const ACT = {
   },
   resetTpl(el) { delete App.settings.tplOverrides[el.dataset.id]; saveSettings(); closeModal(); rerender(); },
   delTpl(el) { if (!confirmBox('Supprimer ce modèle ?')) return; App.settings.customTemplates = App.settings.customTemplates.filter(t => t.id !== el.dataset.id); saveSettings(); closeModal(); rerender(); },
-  async gmailOn() { try { const e = await Gmail.connect(gmailClientId()); toast('Gmail connecté : ' + e); rerender(); } catch (e) { toast(e.message, 'err'); } },
-  gmailOff() { Gmail.disconnect(); toast('Gmail déconnecté'); rerender(); },
+  copy(el) { copyText(el.dataset.v); },
   backup,
   async wipe() {
     if (!confirmBox('Effacer TOUTES les données (dossiers, fichiers, paramètres) de cet appareil ? Irréversible.')) return;

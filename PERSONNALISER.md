@@ -8,14 +8,13 @@ Ce guide s'adresse aux agents et mandataires, **sans connaissance technique**.
 
 1. Téléchargez le ZIP : https://github.com/COPROASSISTANCE/coprovente/archive/refs/heads/main.zip
 2. Décompressez-le où vous voulez (ex. *Documents › CoproVente*). Ce dossier est **votre copie** : modifiez-la librement.
-3. Double-cliquez sur **« Lancer CoproVente.bat »** (Windows) ou **« Lancer CoproVente (Mac).command »** (Mac).
-   L'application s'ouvre dans le navigateur à l'adresse `http://localhost:8080`. Laissez la petite fenêtre noire ouverte.
+3. Double-cliquez sur **`index.html`** : l'application s'ouvre dans votre navigateur.
 
-> Vos dossiers et fichiers restent **dans votre navigateur, sur votre ordinateur**. Utilisez toujours le même navigateur et exportez régulièrement une sauvegarde (Paramètres).
+> Vos dossiers et fichiers restent **dans votre navigateur, sur votre ordinateur**. Utilisez toujours le même navigateur et le même dossier, et exportez régulièrement une sauvegarde (Paramètres).
 
-## 2. Connecter votre Gmail (30 s)
+## 2. Vos mails
 
-Cliquez sur **« Connecter mon Gmail »**, choisissez votre compte et acceptez. Détails : [GMAIL.md](GMAIL.md).
+Onglet **Mails** de chaque dossier : choisissez un modèle, puis copiez en un clic l'adresse, l'objet et le message, et collez-les dans votre messagerie. Collez aussi les mails reçus pour garder l'historique (5 fils par bien : notaire, syndic, vendeur, acquéreur, autre).
 
 ## 3. Personnaliser
 

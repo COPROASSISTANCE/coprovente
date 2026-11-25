@@ -16,9 +16,4 @@ const APP_CONFIG = {
 
   // Logo : nom d'un fichier image placé dans ce dossier (svg, png, jpg)
   logo: 'icon.svg',
-
-  // Identifiant Google partagé : permet à chaque utilisateur de connecter SON
-  // Gmail en un clic, sans rien configurer. (Créé une fois par l'éditeur, voir GMAIL.md.)
-  // Chaque utilisateur peut le remplacer par le sien dans Paramètres › Avancé.
-  gmailClientId: '',
 };
