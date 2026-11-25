@@ -2,10 +2,11 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CoproVente</title>
-<meta name="description" content="Le copilote gratuit des agents et mandataires immobiliers : prospection, estimations, mandats, visites, ventes en copropriété.">
+<meta name="description" content="L’assistant de suivi commercial des agents immobiliers : qui relancer, quelle action réaliser, où en est chaque vente.">
 <meta name="theme-color" content="#0b1f3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <script>if (location.protocol !== 'file:') document.write('<link rel="manifest" href="manifest.webmanifest">');</script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="app.css">
@@ -22,16 +23,18 @@
 <div class="layout">
   <aside class="sidebar" aria-label="Navigation principale">
     <nav class="side-nav">
-      <a href="#/" data-page="accueil"><i>📊</i>Tableau de bord</a>
-      <p class="side-title">Activité</p>
-      <a href="#/prospection" data-page="prospection"><i>🎯</i>Prospection</a>
+      <a href="#/" data-page="accueil"><i>🏠</i>À traiter</a>
+      <a href="#/relances" data-page="relances"><i>📞</i>Relances</a>
+      <p class="side-title">Suivi commercial</p>
+      <a href="#/contacts" data-page="contacts"><i>👥</i>Contacts</a>
       <a href="#/estimations" data-page="estimations"><i>📐</i>Estimations</a>
-      <a href="#/mandats" data-page="mandats"><i>📝</i>Mandats & biens</a>
+      <a href="#/biens" data-page="biens"><i>🏷️</i>Biens</a>
+      <a href="#/mandats" data-page="mandats"><i>📝</i>Mandats</a>
       <a href="#/visites" data-page="visites"><i>🚪</i>Visites</a>
-      <a href="#/ventes" data-page="ventes"><i>🏆</i>Ventes réalisées</a>
+      <a href="#/ventes" data-page="ventes"><i>🤝</i>Ventes</a>
+      <a href="#/stats" data-page="stats"><i>📈</i>Indicateurs</a>
       <p class="side-title">Ressources</p>
-      <a href="#/modeles" data-page="modeles"><i>✉️</i>Modèles de mails</a>
-      <a href="#/outils" data-page="outils"><i>🧮</i>Outils</a>
+      <a href="#/outils" data-page="outils"><i>🧰</i>Outils</a>
       <a href="#/guides" data-page="guides"><i>📚</i>Guides copropriété</a>
     </nav>
     <p class="side-foot">Données stockées uniquement sur cet appareil · logiciel libre (MIT)</p>
@@ -39,9 +42,16 @@
   <div id="navBack" class="nav-back"></div>
   <div class="main">
     <main id="view" class="container"><p class="muted">Chargement…</p></main>
-    <footer class="foot container">CoproVente · contenus métier : guides pratiques <a href="https://www.copro-assistance.fr" target="_blank" rel="noopener">Copro-Assistance</a> · information générale, ne remplace pas un conseil personnalisé.</footer>
+    <footer class="foot container">CoproVente · contenus copropriété : guides pratiques <a href="https://www.copro-assistance.fr" target="_blank" rel="noopener">Copro-Assistance</a> · information générale, ne remplace pas un conseil personnalisé.</footer>
   </div>
 </div>
+<nav class="bottom-nav" aria-label="Navigation rapide">
+  <a href="#/" data-page="accueil"><i>🏠</i>Accueil</a>
+  <a href="#/relances" data-page="relances"><i>📞</i>Relances</a>
+  <button class="bn-add" data-a="quickAdd" aria-label="Ajouter"><i>＋</i></button>
+  <a href="#/visites" data-page="visites"><i>🚪</i>Visites</a>
+  <a href="#/biens" data-page="biens"><i>🏷️</i>Biens</a>
+</nav>
 <div id="modal" hidden></div>
 <div id="toasts" aria-live="polite"></div>
 <script src="config.js"></script>
@@ -51,5 +61,9 @@
 <script src="docs.js"></script>
 <script src="pages.js"></script>
 <script src="crm.js"></script>
+<script src="gen.js"></script>
+<script src="sim.js"></script>
+<script src="aidocs.js"></script>
+<script src="flows.js"></script>
 </body>
 </html>

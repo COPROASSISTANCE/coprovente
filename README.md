@@ -1,65 +1,72 @@
 # CoproVente
 
-**Le copilote libre et gratuit des agents et mandataires immobiliers pour vendre en copropriété.**
+**L'assistant de suivi commercial des agents et mandataires immobiliers, pensé pour le téléphone : savoir qui relancer, quelle action réaliser et où en est chaque vente.**
 
-CoproVente guide pas à pas chaque vente, de la prise de mandat à l'acte authentique : pièces à réunir, questions à poser au vendeur, signaux d'alerte, pré-état daté, offre d'achat, transmission au notaire et suivi des mails.
+Libre et gratuit (licence MIT). Spécialisé dans la vente en copropriété, avec les guides pratiques de [Copro-Assistance](https://www.copro-assistance.fr).
 
-Les contenus métier sont issus des guides pratiques de [Copro-Assistance](https://www.copro-assistance.fr) (édition 2026) : *Prise de mandat vente en copropriété*, *Checklist vendeur*, *Lire un appel de fonds*, *Comprendre les annexes comptables*.
-
-## Fonctionnalités
-
-| Module | Ce qu'il fait |
-|---|---|
-| **Tableau de bord** | Vue d'ensemble graphique : prospection, estimations, mandats, biens en commercialisation, visites, ventes réalisées ; entonnoir d'activité, honoraires sur 12 mois, visites par semaine, mandats par type, tâches et échéances des 14 prochains jours |
-| **Prospection, estimations, visites** | Fiches prospects avec relances, estimations (fourchette, prix au m²) transformables en mandat en un clic, visites liées aux biens avec retours et intérêt |
-| **Mandats & ventes** | Liste des mandats filtrable par étape, échéances de mandat, historique des ventes et honoraires, objectif annuel |
-| **Parcours (timeline)** | 13 étapes de la prise de mandat à l'après-vente, avec tâches, conseils et actions en un clic. Les tâches liées à une pièce se cochent seules quand la pièce est reçue |
-| **Fiche** | Mandat, bien, lots et tantièmes, copropriété/syndic, vendeurs, acquéreurs, notaires, dates clés (calcul automatique de la fin du délai de rétractation, jours fériés compris) |
-| **Pièces** | Plus de 50 pièces types (vendeur, diagnostics, copropriété, acquéreur, transaction) avec statut, dates, exercice, validité des diagnostics. Glisser-déposer avec **classement automatique** d'après le nom du fichier |
-| **Entretien vendeur** | Le questionnaire de prise de mandat (bien, copropriété, usage, calendrier) avec réponses « à vérifier » |
-| **Analyse copro** | 12 signaux à traiter avant commercialisation, **fiches de lecture d'appels de fonds** (calcul des quotes-parts), **contrôle express des annexes comptables**, mentions copropriété de l'annonce |
-| **Mails — 5 fils par bien** | Notaire, syndic, vendeur, acquéreur, autre. Copie en un clic de l'adresse, de l'objet et du message ; mails reçus collés pour garder l'historique |
-| **Modèles de mails** | 20 modèles pré-remplis (pièces manquantes, accès extranet, documents manquants sur l'extranet, transmission au notaire…), modifiables, avec variables |
-| **Offre d'achat** | Générée depuis la fiche (prix en lettres, financement, conditions suspensives, mentions légales) → impression/PDF, Word, ou rangée dans les pièces |
-| **Pré-état daté** | Comparatif syndic / Copro-Assistance, état des pièces utiles, **demande pré-remplie** à Copro-Assistance avec les pièces jointes |
-| **Notaire** | Checklist d'envoi, note de transmission, **export ZIP** du dossier (fichiers renommés date_nature_nom + inventaire CSV) |
-| **Import PDF** | Lecture d'un mandat ou d'une offre PDF dans le navigateur, extraction proposée pour validation |
-| **Outils** | Honoraires/net vendeur, frais d'acquisition, prorata de taxe foncière, quote-part, délai de rétractation, validité des diagnostics, mensualité de prêt |
-
-## Confidentialité
-
-- **Aucun serveur, aucun compte** : toutes les données (dossiers et fichiers) restent dans le navigateur de l'utilisateur (IndexedDB).
-- Aucune connexion à votre messagerie : l'application prépare les mails, vous les copiez et les envoyez vous-même.
-- Sauvegarde/restauration complète en un fichier JSON (Paramètres).
+▶ **Essayer en ligne :** https://coproassistance.github.io/coprovente/
 
 ## ⬇️ Installer sur votre ordinateur (2 minutes)
 
 1. **[Télécharger CoproVente (ZIP)](https://github.com/COPROASSISTANCE/coprovente/archive/refs/heads/main.zip)** et décompresser le dossier où vous voulez (ex. *Documents*).
 2. Double-cliquer sur **`index.html`** : l'application s'ouvre dans votre navigateur. Rien à installer.
 
-C'est votre copie : vous pouvez la modifier librement (nom, couleurs, logo dans `config.js` ; étapes, pièces et modèles de mails dans `data.js`) — voir **[PERSONNALISER.md](PERSONNALISER.md)**.
+C'est votre copie : modifiez-la librement (nom, couleurs, logo dans `config.js` ; étapes, pièces, modèles de mails dans `data.js`). Voir **[PERSONNALISER.md](PERSONNALISER.md)**.
 
-Vous pouvez aussi l'essayer en ligne sans rien installer : https://coproassistance.github.io/coprovente/
+## Le principe : une seule saisie, un dossier qui évolue
 
+Un **contact** vendeur est associé à un **bien**. Ce bien fait ensuite l'objet d'une **estimation**, d'un **mandat**, de **visites** et d'une **vente**, sans recopier les informations. Un propriétaire peut vendre plusieurs biens, un bien peut avoir plusieurs propriétaires, plusieurs mandats peuvent se succéder.
+
+## Fonctionnalités
+
+| Module | Ce qu'il fait |
+|---|---|
+| **À traiter** (accueil) | Relances du jour, estimations en attente, biens sans activité, échéances de mandat, visites du jour et comptes rendus manquants, ventes bloquées : chaque ligne mène à l'action |
+| **Relances** | Appel et SMS pré-rempli en un geste, puis résultat de l'échange et prochaine action datée |
+| **Contacts** | Prospection vendeur (projet, maturité, statut, opposition à la prospection), fichier acquéreurs (budget, secteurs, critères, financement), historique des échanges |
+| **Estimations** | Rendez-vous, rapport et restitution suivis séparément ; fourchette et prix ; retour du vendeur et issue ; import de rapports ; **rendu d'estimation PDF** et mail d'envoi |
+| **Biens** | Prix et historique, supports de diffusion, demandes / visites / offres, actions, alertes d'inactivité, **bilan vendeur**, **aide à l'annonce** avec pense-bête des mentions obligatoires |
+| **Mandats** | Statuts, échéances, répartition des honoraires, avenants, historique des conditions, mandats successifs |
+| **Visites** | **Compte rendu en une minute** (choix rapides) ; comptes rendus vendeur et visiteur, PDF et mails |
+| **Ventes** | Suivi dès l'offre acceptée : étapes prévues / réalisées, pièces attendues et responsable, point bloquant, honoraires prévus / facturés / encaissés, après-vente |
+| **Dossier copropriété** | Parcours pas à pas, pièces avec statuts (dont « partiellement reçue » et « non réalisé sur la copropriété »), identifiants extranet, inventaire des équipements, analyse copro (signaux, appels de fonds, annexes, PV d'AG), pré-état daté, note au notaire et export ZIP |
+| **Outils** | Offre d'achat à compléter et signer, facture d'honoraires, rédaction d'e-mail, fiche de commercialisation, annonce, simulateur de budget travaux, calculateurs, modèles de mails, guides copropriété |
+| **Indicateurs** | Prospects actifs, relances en retard, rendez-vous par origine, délai de restitution, taux de transformation, motifs de perte, honoraires encaissés, délai de vente |
+
+## Assistant IA (facultatif)
+
+Avec une clé Claude (Paramètres › Assistant IA), l'application rédige comptes rendus de visite, annonces, bilans vendeur, analyses d'estimation et e-mails, et analyse appels de fonds, annexes comptables et PV d'AG déposés. Les données utiles sont alors envoyées à Anthropic à chaque génération et l'usage est facturé sur votre compte Anthropic. Sans clé, une rédaction automatique à partir de modèles reste disponible.
+
+## Confidentialité
+
+- **Aucun serveur, aucun compte** : dossiers et fichiers restent dans le navigateur de l'utilisateur (IndexedDB).
+- Aucune connexion à la messagerie : les mails sont préparés puis copiés.
+- Sauvegarde et restauration complètes en un fichier (Paramètres).
 
 ## Structure
+
 ```
 config.js       ← nom, couleurs, logo (à personnaliser)
-data.js         ← référentiel métier : étapes, pièces, questions, mails, guides
+data.js         ← référentiel métier : étapes, pièces, questions, modèles de mails, guides, équipements
+sim.js          ← simulateur de budget travaux (repères de prix)
 index.html      page unique
-app.css         styles (clair/sombre, mobile)
-store.js        stockage local (IndexedDB)
-app.js          cœur, tableau de bord, parcours, fiche, pièces, analyse
-docs.js         mails, offre, pré-état daté, notaire, ZIP
-pages.js        modèles, outils, guides, paramètres, import PDF
-crm.js          tableau de bord, prospection, estimations, visites, mandats, ventes, profil
+app.css         styles (clair / sombre, mobile)
+store.js        stockage local
+app.js          dossier de vente : parcours, fiche, pièces, analyse copro
+docs.js         mails, offre, pré-état daté, notaire, export ZIP
+pages.js        modèles, calculateurs, guides, paramètres, import PDF
+crm.js          accueil, relances, contacts, estimations, biens, mandats, visites, ventes, indicateurs, profil
+gen.js          documents (rendu, comptes rendus, bilan, annonce, fiche, offre, facture) et assistant IA
+aidocs.js       analyse IA des appels de fonds, annexes comptables et PV d'AG
+flows.js        actions, reprise des données, exemple, démarrage
 sw.js, manifest installation et mode hors ligne
 ```
-Aucune compilation : modifiez un fichier, rechargez la page.
-Bibliothèques chargées à la demande depuis cdnjs : pdf.js (import PDF) et JSZip (export ZIP).
+Aucune compilation : modifiez un fichier, rechargez la page. Bibliothèques chargées à la demande : pdf.js (import de mandat), JSZip (export ZIP), SDK Anthropic (assistant IA).
 
 ## Avertissement
-Information générale, à adapter au bien, à la copropriété, au vendeur et aux demandes de l'étude notariale. Ne remplace pas un conseil personnalisé. Les estimations (frais d'acquisition, délais) sont indicatives.
+
+Information générale, à adapter au bien, à la copropriété et aux demandes de l'étude notariale ; ne remplace pas un conseil personnalisé. Les estimations (frais, délais, budget travaux) sont indicatives.
 
 ## Licence
-MIT — libre d'utilisation, de modification et de redistribution.
+
+MIT : libre d'utilisation, de modification et de redistribution.

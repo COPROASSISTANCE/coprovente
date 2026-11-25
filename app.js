@@ -48,15 +48,26 @@ function finRetractation(presentation) {
 
 /* ---------- État ---------- */
 const DEFAULT_SETTINGS = {
-  agent: { civ: '', prenom: '', nom: '', statut: 'Agent commercial indépendant (mandataire)', reseau: '', agence: '', carte: '', rsac: '', email: '', tel: '', adresse: '', signature: '' },
+  agent: { civ: '', prenom: '', nom: '', statut: 'Agent commercial indépendant (mandataire)', reseau: '', agence: '', carte: '', rsac: '', siren: '', email: '', tel: '', adresse: '', signature: '' },
   tplOverrides: {}, customTemplates: [], onboarded: false,
+  delais: { inactivite: 21, bilan: 15, relanceEstim: 7, rappelMandat: 30 },
+  ai: { key: '', model: 'claude-opus-5-5' },
 };
+/* Complète les dossiers créés par une version précédente */
+function ensureDossier(d) {
+  d.com = Object.assign({ prixLancement: '', prixActuel: '', historiquePrix: [], dateEntree: '', datePublication: '', supports: [], demandes: 0, offres: 0, dernierEchangeVendeur: '', dernierBilan: '', prochainBilan: '', actions: [], annonce: { titre: '', texte: '', atouts: [], ton: 'commercial' }, notes: '' }, d.com || {});
+  d.vente = Object.assign({ offreMontant: '', offreDate: '', offreAcceptee: '', compromisRealise: '', pretRealise: '', acteRealise: '', honoFacture: '', honoFactureDate: '', honoEncaisse: '', honoEncaisseDate: '', origine: '', blocage: '', merci: false, avis: false, nouvelles: '' }, d.vente || {});
+  d.mandat = Object.assign({ statut: d.phase === 'estimation' ? 'preparation' : 'actif', dateEffet: '', repartition: '', echeances: [], historique: [] }, d.mandat || {});
+  d.mandatsHisto = d.mandatsHisto || [];
+  d.estimationId = d.estimationId || '';
+  return d;
+}
 const App = { dossiers: [], settings: structuredClone(DEFAULT_SETTINGS), current: null, files: [], tab: 'parcours', canal: 'notaire', open: {} };
 
 function newPerson() { return { civ: '', prenom: '', nom: '', email: '', tel: '', adresse: '', situation: '' }; }
 function newDossier(seed = {}) {
   const n = App.dossiers.length + 1;
-  return Object.assign({
+  const o = Object.assign({
     id: uid(), ref: 'V-' + new Date().getFullYear() + '-' + String(n).padStart(3, '0'), phase: 'mandat',
     createdAt: Date.now(), updatedAt: Date.now(), notes: '',
     mandat: { numero: '', type: 'exclusif', date: today(), duree: 3, prix: '', honoraires: '', charge: 'vendeur' },
@@ -73,6 +84,7 @@ function newDossier(seed = {}) {
     mails: Object.fromEntries(CANAUX.map(c => [c.id, { to: '', query: '', messages: [], lastSync: 0 }])),
     journal: [{ t: Date.now(), txt: 'Dossier créé', type: 'auto' }],
   }, seed);
+  return ensureDossier(o);
 }
 
 let saveTimer = {};
@@ -154,7 +166,7 @@ const isApplicable = (d, p) => !p.cond || p.cond(d);
 const filesFor = (pieceId) => App.files.filter(f => f.pieceId === pieceId);
 function piecesManquantes(d, cats, filter) {
   return PIECES.filter(p => (!cats || cats.includes(p.cat)) && p.id !== 'divers' && isApplicable(d, p) && (!filter || filter(p)))
-    .filter(p => { const s = (d.pieces[p.id] || {}).s || ''; return (s === '' && !p.opt) || s === 'D' || s === 'A'; });
+    .filter(p => { const s = (d.pieces[p.id] || {}).s || ''; return (s === '' && !p.opt) || ['D', 'A', 'P'].includes(s); });
 }
 function diagExpiry(d, p) {
   const st = d.pieces[p.id];
@@ -169,6 +181,7 @@ function taskState(d, step, t) {
     const p = pieceDef(o.piece), s = (d.pieces[o.piece] || {}).s;
     if (s === 'R') return { done: true, auto: 'pièce reçue' };
     if (s === 'SO') return { done: true, auto: 'sans objet' };
+    if (s === 'NR') return { done: true, auto: 'non réalisé sur la copropriété' };
     if (p && !isApplicable(d, p)) return { done: true, auto: 'sans objet pour ce bien' };
   }
   return { done: false };
@@ -284,7 +297,8 @@ async function render() {
     if (!confirmBox('Vous avez des modifications non enregistrées dans « Mon profil ». Quitter sans enregistrer ?')) { location.hash = '#/profil'; return; }
     App.profilDirty = false;
   }
-  $$('[data-page]').forEach(a => a.classList.toggle('active', a.dataset.page === r.page || (r.page === 'd' && a.dataset.page === 'mandats')));
+  const alias = { d: 'biens', c: 'contacts', e: 'estimations', v: 'visites', calculs: 'outils', modeles: 'outils', guides: 'outils' };
+  $$('[data-page]').forEach(a => a.classList.toggle('active', a.dataset.page === r.page || a.dataset.page === alias[r.page]));
   const v = $('#view');
   if (r.page === 'd') {
     const d = App.dossiers.find(x => x.id === r.id);
@@ -295,22 +309,23 @@ async function render() {
   } else {
     App.current = null;
     const pages = {
-      accueil: viewDashboard, prospection: () => viewEntity('prospects'), estimations: () => viewEntity('estimations'), visites: () => viewEntity('visites'),
-      mandats: () => viewMandats(r.id), ventes: viewVentes, profil: viewProfil, modeles: viewModeles, outils: viewOutils, guides: viewGuides, parametres: viewParametres,
+      accueil: viewHome, relances: viewRelances, contacts: () => viewContacts(r.id), c: () => viewContact(r.id), estimations: () => viewEstimations(r.id), e: () => viewEstimation(r.id),
+      biens: () => viewBiens(r.id), mandats: viewMandats, visites: () => viewVisites(r.id), v: () => viewVisite(r.id), ventes: viewVentes, stats: viewStats,
+      outils: () => viewOutilsHub(r.id), calculs: viewOutils, profil: viewProfil, modeles: viewModeles, guides: viewGuides, parametres: viewParametres,
     };
-    v.innerHTML = (pages[r.page] || viewDashboard)();
+    v.innerHTML = (pages[r.page] || viewHome)();
   }
   document.title = (App.current ? dossierTitle(App.current) + ' — ' : '') + ((typeof APP_CONFIG === 'object' && APP_CONFIG.nom) || 'CoproVente');
 }
 function rerender() {
   setTimeout(() => {
-    const ae = document.activeElement, key = ae && ae.dataset ? (ae.dataset.b || ae.dataset.t) : null;
+    const ae = document.activeElement, key = ae && ae.dataset ? (ae.dataset.b || ae.dataset.t || ae.dataset.eb) : null;
     let caret = null; try { caret = ae.selectionStart; } catch (e) {}
     const y = scrollY;
     render().then(() => {
       scrollTo(0, y);
       if (key) {
-        const n = document.querySelector(`[data-b="${key}"],[data-t="${key}"]`);
+        const n = document.querySelector(`[data-b="${key}"],[data-t="${key}"],[data-eb="${key}"]`);
         if (n) { n.focus({ preventScroll: true }); try { if (caret != null) n.setSelectionRange(caret, caret); } catch (e) {} }
       }
     });
@@ -331,19 +346,20 @@ function cardDossier(d) {
 
 /* ---------- Vue dossier ---------- */
 const TABS = [
-  ['parcours', '🧭 Parcours'], ['fiche', '🗂️ Fiche'], ['pieces', '📁 Pièces'], ['entretien', '🗒️ Entretien'], ['analyse', '📊 Analyse copro'],
-  ['mails', '✉️ Mails'], ['offre', '✍️ Offre d’achat'], ['ped', '📦 Pré-état daté'], ['notaire', '📤 Notaire'], ['journal', '🕓 Journal'],
+  ['parcours', '🧭 Parcours'], ['fiche', '🗂️ Fiche & mandat'], ['commercialisation', '🏷️ Commercialisation'], ['visites', '🚪 Visites'], ['vente', '🤝 Vente'],
+  ['pieces', '📁 Pièces'], ['mails', '✉️ Mails'], ['analyse', '📊 Analyse copro'], ['entretien', '🗒️ Entretien'], ['ped', '📦 Pré-état daté'],
+  ['offre', '✍️ Offre d’achat'], ['notaire', '📤 Notaire'], ['journal', '🕓 Journal'],
 ];
 function viewDossier(d) {
   const p = progress(d);
   const recus = PIECES.filter(x => (d.pieces[x.id] || {}).s === 'R').length;
   return `<div class="dhead">
-    <div><a href="#/" class="muted small">← Tableau de bord</a><h1>${esc(dossierTitle(d))}</h1>
+    <div><a href="#/biens/tous" class="muted small">← Biens</a><h1>${esc(dossierTitle(d))}</h1>
     <p class="muted">${esc(d.ref)} · ${esc(names(d.vendeurs) || 'vendeur ?')} · lots ${esc(lotsText(d))} · ${eur(d.offre.prix || d.mandat.prix)}</p></div>
     <div class="dhead-side">${field('Étape commerciale', 'phase', { options: PHASES.map(x => [x.id, x.label]), r: true })}
       <div class="mini"><div class="bar"><i style="width:${p.pct}%"></i></div><small>${p.done}/${p.tot} tâches · ${recus} pièces reçues</small></div></div></div>
   <nav class="tabs" role="tablist">${TABS.map(([id, l]) => `<a role="tab" href="#/d/${d.id}/${id}" class="${App.tab === id ? 'active' : ''}">${l}</a>`).join('')}</nav>
-  <div class="tab-body">${({ parcours: tabParcours, fiche: tabFiche, pieces: tabPieces, entretien: tabEntretien, analyse: tabAnalyse, mails: tabMails, offre: tabOffre, ped: tabPed, notaire: tabNotaire, journal: tabJournal }[App.tab] || tabParcours)(d)}</div>`;
+  <div class="tab-body">${({ parcours: tabParcours, fiche: tabFiche, commercialisation: tabCommercialisation, visites: tabVisitesBien, vente: tabVente, pieces: tabPieces, entretien: tabEntretien, analyse: tabAnalyse, mails: tabMails, offre: tabOffre, ped: tabPed, notaire: tabNotaire, journal: tabJournal }[App.tab] || tabParcours)(d)}</div>`;
 }
 
 /* ----- Parcours / timeline ----- */
@@ -401,7 +417,8 @@ function tabFiche(d) {
     ${field('Date de signature', 'mandat.date', { type: 'date', r: true })}${field('Durée (mois)', 'mandat.duree', { type: 'number', r: true })}
     ${field('Prix de présentation (€ FAI)', 'mandat.prix', { type: 'number', r: true })}${field('Honoraires TTC (€)', 'mandat.honoraires', { type: 'number', r: true })}
     ${field('Honoraires à la charge de', 'mandat.charge', { options: [['vendeur', 'Vendeur'], ['acquereur', 'Acquéreur']], r: true })}
-    <div class="field"><span>Repères</span><div class="readout">${pct ? `Honoraires : ${pct} % ${d.mandat.charge === 'acquereur' ? 'du prix hors honoraires' : 'du prix'}<br>Net vendeur : ${eur(prix - hon)}` : '—'}${d.mandat.date && d.mandat.duree ? `<br>Échéance : ${fdate(addMonths(d.mandat.date, d.mandat.duree))}` : ''}</div></div></div></section>
+    <div class="field"><span>Repères</span><div class="readout">${pct ? `Honoraires : ${pct} % ${d.mandat.charge === 'acquereur' ? 'du prix hors honoraires' : 'du prix'}<br>Net vendeur : ${eur(prix - hon)}` : '—'}${d.mandat.date && d.mandat.duree ? `<br>Échéance : ${fdate(addMonths(d.mandat.date, d.mandat.duree))}` : ''}</div></div></div>
+    ${mandatExtra(d)}</section>
   <section class="card"><h2>Le bien</h2><div class="grid4">
     ${field('Adresse', 'bien.adresse', { cls: 'span2', r: true })}${field('Code postal', 'bien.cp')}${field('Ville', 'bien.ville', { r: true })}
     ${field('Type', 'bien.type', { options: ['Appartement', 'Studio', 'Duplex', 'Maison en copropriété', 'Local commercial', 'Parking / box', 'Cave', 'Autre'] })}
@@ -421,14 +438,18 @@ function tabFiche(d) {
     ${field('Nom de la copropriété', 'copro.nom')}${field('N° d’immatriculation', 'copro.immat')}${field('Nombre de lots', 'copro.nbLots', { type: 'number' })}
     ${field('Type de syndic', 'copro.syndicType', { options: [['professionnel', 'Professionnel'], ['benevole', 'Bénévole'], ['cooperatif', 'Coopératif']] })}
     ${field('Syndic (cabinet)', 'copro.syndicNom')}${field('Gestionnaire', 'copro.syndicContact')}${field('E-mail syndic', 'copro.syndicEmail', { type: 'email' })}${field('Téléphone syndic', 'copro.syndicTel')}
-    ${field('Adresse de l’extranet', 'copro.extranet', { cls: 'span2', ph: 'https://… (jamais le mot de passe)' })}
+    ${field('Adresse de l’extranet syndic', 'copro.extranet', { cls: 'span2', ph: 'https://…' })}
+    ${field('Identifiant extranet', 'copro.extranetLogin', { help: 'Avec l’accord du vendeur' })}
+    <div class="field"><span>Mot de passe extranet</span><div class="cfield"><input type="password" data-b="copro.extranetPass" id="f_copro_extranetPass" value="${esc(d.copro.extranetPass || '')}" autocomplete="off"><button class="btn small" data-a="pwToggle" title="Afficher / masquer">👁</button></div>
+      <small>Stocké uniquement sur cet appareil. Conseillez au vendeur un mot de passe temporaire, à changer après la collecte.</small></div>
     ${field('Charges courantes annuelles du lot (€)', 'copro.charges', { type: 'number', help: 'Quote-part budget prévisionnel — mention d’annonce' })}
     ${field('Part du fonds de travaux du lot (€)', 'copro.fondsTravaux', { type: 'number' })}
     ${field('Procédure en cours ?', 'copro.procedure', { options: [['non', 'Non (vérifié)'], ['oui', 'Oui'], ['?', 'À vérifier']], r: true })}
     ${d.copro.procedure === 'oui' ? field('Détail de la procédure', 'copro.procedureDetail', { cls: 'span3' }) : ''}</div>
     <h3>Exercices concernés (pré-état daté)</h3><div class="grid4">
     ${field('Exercice 1 — début', 'copro.ex1Debut', { type: 'date' })}${field('Exercice 1 — clôture', 'copro.ex1Fin', { type: 'date' })}
-    ${field('Exercice 2 — début', 'copro.ex2Debut', { type: 'date' })}${field('Exercice 2 — clôture', 'copro.ex2Fin', { type: 'date' })}</div></section>
+    ${field('Exercice 2 — début', 'copro.ex2Debut', { type: 'date' })}${field('Exercice 2 — clôture', 'copro.ex2Fin', { type: 'date' })}</div>
+    ${equipBlock(d)}</section>
   <section class="card"><h2>Vendeur(s)</h2>${d.vendeurs.map((p, i) => personBlock('vendeurs', i, p, 'Vendeur')).join('')}<button class="btn small" data-a="addPerson" data-list="vendeurs">＋ Ajouter un vendeur</button></section>
   <section class="card"><h2>Acquéreur(s)</h2>${d.acquereurs.map((p, i) => personBlock('acquereurs', i, p, 'Acquéreur')).join('') || '<p class="muted">Aucun acquéreur pour le moment.</p>'}<button class="btn small" data-a="addPerson" data-list="acquereurs">＋ Ajouter un acquéreur</button></section>
   <section class="card"><h2>Notaires & autres contacts</h2><div class="grid4">
@@ -447,16 +468,17 @@ function tabFiche(d) {
 function tabPieces(d) {
   const f = App.pieceFilter || 'all';
   const counts = { R: 0, miss: 0 };
-  PIECES.forEach(p => { const s = (d.pieces[p.id] || {}).s || ''; if (s === 'R') counts.R++; else if (isApplicable(d, p) && s !== 'SO' && p.id !== 'divers') counts.miss++; });
+  PIECES.forEach(p => { const s = (d.pieces[p.id] || {}).s || ''; if (s === 'R') counts.R++; else if (isApplicable(d, p) && !['SO', 'NR'].includes(s) && p.id !== 'divers') counts.miss++; });
   return `<div class="dropzone" data-drop="1"><b>Déposez ici vos fichiers</b> (PDF, images, Word…) — ils sont classés automatiquement d’après leur nom et stockés sur cet appareil.
     <label class="btn small primary">Choisir des fichiers<input type="file" multiple hidden data-upload="auto"></label></div>
   <div class="row between wrap gap"><div class="seg">${[['all', 'Toutes'], ['miss', `Manquantes (${counts.miss})`], ['R', `Reçues (${counts.R})`], ['V', 'À analyser'], ['D', 'Demandées']].map(([id, l]) => `<button class="${f === id ? 'on' : ''}" data-a="pieceFilter" data-f="${id}">${l}</button>`).join('')}</div>
     <div class="row gap wrap"><button class="btn small" data-a="compose" data-tpl="vendeur_pieces">✉️ Pièces manquantes → vendeur</button><button class="btn small" data-a="compose" data-tpl="syndic_documents">✉️ → syndic</button><button class="btn small" data-a="compose" data-tpl="syndic_extranet">✉️ Extranet incomplet</button></div></div>
-  <p class="small muted">Statuts : <b>Reçue</b> · <b>Demandée</b> (avec date, relance proposée après 7 jours) · <b>À analyser</b> · <b>À actualiser</b> · <b>Sans objet</b> — à ne cocher qu’après vérification.</p>
+  ${pedCompareCard(d, true)}
+  <p class="small muted">Statuts : <b>Reçue</b> · <b>Partiellement reçue</b> · <b>Demandée</b> (relance proposée après 7 jours) · <b>À analyser</b> · <b>À actualiser</b> · <b>Non réalisé sur la copropriété</b> · <b>Sans objet</b> — à ne cocher qu’après vérification.</p>
   ${PIECE_CATEGORIES.map(c => {
     const ps = PIECES.filter(p => p.cat === c.id).filter(p => {
       const s = (d.pieces[p.id] || {}).s || '';
-      if (f === 'all') return true; if (f === 'miss') return isApplicable(d, p) && !['R', 'SO'].includes(s) && p.id !== 'divers';
+      if (f === 'all') return true; if (f === 'miss') return isApplicable(d, p) && !['R', 'SO', 'NR'].includes(s) && p.id !== 'divers';
       return s === f;
     });
     if (!ps.length) return '';
@@ -471,7 +493,8 @@ function pieceRow(d, p) {
       <small>${esc(p.hint || '')}</small>
       ${fl.length ? `<div class="files">${fl.map(fileChip).join('')}</div>` : ''}</div>
     <div class="pctl">
-      <select data-a-change="setPieceStatus" data-id="${p.id}" class="status ${PIECE_STATUTS.find(x => x.id === s).cls}" aria-label="Statut">${PIECE_STATUTS.map(x => `<option value="${x.id}" ${x.id === s ? 'selected' : ''}>${x.label}</option>`).join('')}</select>
+      <select data-a-change="setPieceStatus" data-id="${p.id}" class="status ${PIECE_STATUTS.find(x => x.id === s).cls}" aria-label="Statut">${PIECE_STATUTS.filter(x => !x.copro || p.cat.startsWith('copro')).map(x => `<option value="${x.id}" ${x.id === s ? 'selected' : ''}>${x.label}</option>`).join('')}</select>
+      <div class="pquick"><button class="chip ${s === 'R' ? 'on' : ''}" data-a="pieceQuick" data-id="${p.id}" data-s="R">✔ Reçue</button><button class="chip ${s === 'P' ? 'on' : ''}" data-a="pieceQuick" data-id="${p.id}" data-s="P">◐ Partiellement reçue</button>${p.cat.startsWith('copro') ? `<button class="chip ${s === 'NR' ? 'on' : ''}" data-a="pieceQuick" data-id="${p.id}" data-s="NR">∅ Non réalisé sur la copropriété</button>` : ''}</div>
       <div class="pdates">${s === 'D' ? `<label>Demandée le <input type="date" data-b="pieces.${p.id}.dd" value="${esc(st.dd || '')}"></label>` : ''}
         ${p.cat === 'diag' ? `<label>Réalisé le <input type="date" data-b="pieces.${p.id}.doc" data-r value="${esc(st.doc || '')}"></label>${exp ? `<span class="${daysUntil(exp) < 0 ? 'late' : daysUntil(exp) < 45 ? 'soon' : 'okc'}">valide jusqu’au ${fdate(exp)}</span>` : p.validite === null ? '<span class="small muted">illimité si négatif</span>' : ''}` : ''}
         <input class="ex" data-b="pieces.${p.id}.ex" value="${esc(st.ex || '')}" placeholder="exercice / version / note"></div>
@@ -507,9 +530,11 @@ function tabAnalyse(d) {
     <button class="btn small" data-a="addAlerte">＋ Ajouter un point</button></section>
   <section class="card"><div class="row between"><h2>💶 Fiches de lecture des appels de fonds</h2><button class="btn small" data-a="addAppel">＋ Nouvel appel</button></div>
     <p class="small muted">Un appel indique une somme <b>appelée</b> ; il ne prouve pas un paiement. Ne multipliez jamais le total à payer par quatre pour estimer des charges annuelles.</p>
+    ${aiDropZone('appel', 'Déposez un appel de fonds (PDF ou photo)', 'L’IA remplit une nouvelle fiche de lecture et commente l’appel.', 1)}
     ${d.appels.length ? d.appels.map((a, i) => appelCard(d, a, i)).join('') : '<p class="muted">Aucune fiche. Ajoutez le dernier appel de fonds du vendeur.</p>'}</section>
+  ${pvCard(d)}
   ${annexesCard(d)}
-  <section class="card"><h2>📣 Mentions copropriété pour l’annonce</h2><p class="small muted">Générées à partir de la fiche (nombre de lots, charges courantes annuelles, procédure, DPE).</p><button class="btn small" data-a="annonceCopro">Générer les mentions</button></section>`;
+  <section class="card"><h2>📣 Les mentions obligatoires pour l’annonce en copropriété</h2><p class="small muted">Générées à partir de la fiche (nombre de lots, charges courantes annuelles, procédure, DPE).</p><button class="btn small" data-a="annonceCopro">Générer les mentions</button></section>`;
 }
 function signalRow(d, s) {
   const x = d.signaux[s.id] || {};
@@ -532,6 +557,7 @@ function appelCalc(a) {
 function appelCard(d, a, i) {
   const c = appelCalc(a), p = `appels.${i}`;
   return `<div class="appel"><div class="row between"><b>Appel ${i + 1}${a.periode ? ' — ' + esc(a.periode) : ''}</b><button class="icon-btn" data-a="delAppel" data-i="${i}">🗑</button></div>
+  ${a.analyse ? `<div class="ai-box"><b>✨ Analyse${a.fichier ? ' de « ' + esc(a.fichier) + ' »' : ''}</b><p>${esc(a.analyse).replace(/\n/g, '<br>')}</p></div>` : ''}
   <div class="grid4">${field('Période / exercice', p + '.periode', { ph: '4e trimestre 2026' })}${field('Date d’exigibilité', p + '.exig', { type: 'date' })}${field('Référence de l’avis', p + '.ref')}${field('Pièce de référence', p + '.piece', { ph: 'budget, PV, règlement…' })}</div>
   <table class="tbl"><thead><tr><th>Nature</th><th>Catégorie</th><th>Global appelé (€)</th><th>Vos tantièmes</th><th>Total clé</th><th>Votre part</th><th></th></tr></thead><tbody>
   ${c.lines.map((l, j) => `<tr><td><input data-b="${p}.lignes.${j}.nature" value="${esc(l.nature || '')}"></td>
@@ -557,6 +583,8 @@ function annexesCard(d) {
   const ratio = num(A.creances) && num(A.budget) ? (A.creances / A.budget * 100).toFixed(2) : null;
   return `<section class="card"><h2>🧮 Contrôle express des annexes comptables</h2>
   <p class="small muted">Saisissez les totaux de vos annexes (listes séparées par « ; »). Les égalités vérifient la cohérence des totaux, pas la réalité des prestations ni la clé appliquée au lot.</p>
+  ${aiDropZone('annexes', 'Déposez jusqu’à 6 documents : annexes comptables 1 à 5, budget, convocation…', 'L’IA reporte les totaux ci-dessous et commente les comptes.', 6)}
+  ${A.analyse ? `<div class="ai-box"><b>✨ Analyse${A.fichiers ? ' — ' + esc(A.fichiers) : ''}</b><p>${esc(A.analyse).replace(/\n/g, '<br>')}</p></div>` : ''}
   <div class="grid4">${field('Copropriété / exercice / version', p + 'exercice', { cls: 'span2' })}${field('Comptes approuvés ?', p + 'approuve', { options: [['', '—'], ['oui', 'Oui (PV vérifié)'], ['non', 'Soumis à l’AG seulement']] })}
   ${field('Budget courant N (€)', p + 'budget', { type: 'number', r: true })}
   ${field('Annexe 2 — total charges courantes', p + 'a2c', { type: 'number', r: true })}${field('Annexe 3 — charges nettes par clé', p + 'a3', { ph: '56350; 12080; 34250', r: true })}

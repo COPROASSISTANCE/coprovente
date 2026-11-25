@@ -212,7 +212,7 @@ function pedPieces() { return PIECES.filter(p => p.ped); }
 function pedRequestText(d) {
   const V = tplVars(d), P = d.ped;
   const got = pedPieces().filter(p => (d.pieces[p.id] || {}).s === 'R');
-  const miss = pedPieces().filter(p => isApplicable(d, p) && !['R', 'SO'].includes((d.pieces[p.id] || {}).s || ''));
+  const miss = pedPieces().filter(p => isApplicable(d, p) && !['R', 'SO', 'NR'].includes((d.pieces[p.id] || {}).s || ''));
   const ex = (a, b) => a || b ? `du ${fdate(a)} au ${fdate(b)}` : 'à préciser';
   return `Bonjour,
 
@@ -248,37 +248,56 @@ Merci de me confirmer la prise en charge et le délai.
 
 ${signature()}`;
 }
+function pedCompareCard(d, withCA) {
+  const mode = d.ped.mode || 'extranet';
+  return `<section class="card ${withCA ? 'ca-box' : ''}"><h2>${withCA ? '📦 ' : ''}Qui peut réaliser le pré-état daté ?</h2>
+    <p>Les informations financières de la copropriété doivent être remises à l’acquéreur <b>au plus tard à la promesse</b> (CCH, art. L.721-2), sinon le délai de rétractation ne court qu’après leur communication.</p>
+    <div class="ped-opts"><div class="pedo"><b>Le syndic</b><span class="big">≈ 320 €</span><small>prix moyen</small><span class="big">≈ 6 jours</span><small>délai moyen</small></div>
+      <div class="pedo ca"><b>${COPRO_ASSISTANCE.nom}</b><span class="big">60 € TTC</span><small>tous lots inclus</small><span class="big">24 h</span><small>à réception d’un dossier exploitable</small></div></div>
+    <div class="tip">💡 Vous pouvez présenter les deux solutions à votre client : le choix lui appartient. Sans commande préalable de sa part, le syndic ne peut ni imposer ni facturer son pré-état daté.</div>
+    ${withCA ? `<div class="seg">${[['extranet', 'Option 1 · Accès extranet'], ['documents', 'Option 2 · Envoi des documents']].map(([v, l]) => `<button class="${mode === v ? 'on' : ''}" data-a="pedMode" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="row gap wrap modal-actions"><button class="btn primary" data-a="pedCA">📦 Demander le pré-état daté à ${COPRO_ASSISTANCE.nom}</button><a class="btn ghost" href="#/d/${d.id}/ped">Voir le détail de la demande</a></div>
+    <p class="small muted">Mail pré-rempli vers ${COPRO_ASSISTANCE.email} · 📞 <a href="tel:${COPRO_ASSISTANCE.tel.replace(/\s/g, '')}">${COPRO_ASSISTANCE.tel}</a></p>` : ''}
+    <div class="row gap wrap"><button class="btn" data-a="compose" data-tpl="vendeur_ped">✉️ Présenter les deux options au vendeur</button><button class="btn small ghost" data-a="compose" data-tpl="syndic_documents">Écrire au syndic</button></div></section>`;
+}
 function tabPed(d) {
-  const ps = pedPieces(), got = ps.filter(p => ['R', 'SO'].includes((d.pieces[p.id] || {}).s || '')).length;
-  const P = d.ped;
-  return `<div class="grid-side"><div>
-  <section class="card"><h2>Pourquoi l’anticiper ?</h2>
-    <p>Les informations financières de la copropriété (charges payées sur deux exercices, sommes dues par l’acquéreur, impayés globaux, dette fournisseurs, fonds de travaux du lot) doivent être remises à l’acquéreur <b>au plus tard à la promesse</b> (CCH, art. L.721-2). À défaut, le délai de rétractation de 10 jours ne court qu’à compter du lendemain de leur communication (art. L.721-3).</p>
-    <table class="tbl"><tr><th></th><th>Syndic</th><th>${COPRO_ASSISTANCE.nom}</th></tr>
-      <tr><td>Tarif</td><td>314 € TTC en moyenne*</td><td><b>${COPRO_ASSISTANCE.prix}</b>, tous lots inclus</td></tr>
-      <tr><td>Délai</td><td>6,8 jours ouvrés en moyenne*</td><td><b>${COPRO_ASSISTANCE.delai}</b> (urgence 4 h ouvrées : +40 €)</td></tr>
-      <tr><td>Actualisation</td><td>À vérifier</td><td>Offerte pour la même vente</td></tr>
-      <tr><td>Garantie</td><td>À vérifier</td><td>Remboursé si le notaire refuse le document</td></tr></table>
-    <p class="small muted">* Observatoire Copro-Assistance du prix du pré-état daté, édition 2026. Le choix appartient au vendeur : sans commande préalable non équivoque, le syndic ne peut ni imposer ni facturer son pré-état daté.</p>
-    <button class="btn small" data-a="compose" data-tpl="vendeur_ped">✉️ Présenter les options au vendeur</button></section>
+  const ps = pedPieces(), got = ps.filter(p => ['R', 'SO', 'NR'].includes((d.pieces[p.id] || {}).s || '')).length;
+  const P = d.ped, mode = P.mode || 'extranet';
+  const ok = (cond, txt, link) => `<li class="${cond ? 'okc' : 'soon'}">${cond ? '✔' : '⚠️'} ${txt}${!cond && link ? ` — <a href="${link}">compléter</a>` : ''}</li>`;
+  const st = id => (d.pieces[id] || {}).s || '', recu = id => ['R', 'P', 'V'].includes(st(id));
+  const vendMail = (d.vendeurs.find(p => p.email) || {}).email;
+  return `${pedCompareCard(d)}
+  <section class="card ca-box"><h2>📦 Demander le pré-état daté à ${COPRO_ASSISTANCE.nom}</h2>
+    <p class="small">Mail pré-rempli à copier-coller vers <b>${COPRO_ASSISTANCE.email}</b> · 📞 <a href="tel:${COPRO_ASSISTANCE.tel.replace(/\s/g, '')}">${COPRO_ASSISTANCE.tel}</a></p>
+    <div class="seg big">${[['extranet', 'Option 1 · Accès extranet'], ['documents', 'Option 2 · Envoi des documents']].map(([v, l]) => `<button class="${mode === v ? 'on' : ''}" data-a="pedMode" data-v="${v}">${l}</button>`).join('')}</div>
+    ${mode === 'extranet' ? `<p class="small muted">Avec l’accord du vendeur. Le mail contiendra :</p><ul class="mentions">
+      ${ok(d.copro.syndicNom, 'Nom du syndic' + (d.copro.syndicNom ? ' : ' + esc(d.copro.syndicNom) : ''), `#/d/${d.id}/fiche`)}
+      ${ok(d.copro.extranetLogin && d.copro.extranetPass, 'Identifiants de connexion à l’extranet', `#/d/${d.id}/fiche`)}
+      ${ok(d.lots.some(l => l.num), 'Lot(s) vendu(s)' + (d.lots.some(l => l.num) ? ' : ' + esc(lotsText(d)) : ''), `#/d/${d.id}/fiche`)}
+      ${ok(vendMail, 'E-mail du vendeur pour l’envoi de la facture' + (vendMail ? ' : ' + esc(vendMail) : ''), `#/d/${d.id}/fiche`)}</ul>`
+    : `<p class="small muted">Documents à joindre à votre mail :</p><ul class="mentions">
+      ${ok(recu('appels_fonds'), 'Dernier appel de fonds', `#/d/${d.id}/pieces#p_appels_fonds`)}
+      ${ok(recu('decomptes'), 'Derniers décomptes individuels des 2 derniers exercices', `#/d/${d.id}/pieces#p_decomptes`)}
+      ${ok(recu('convocation'), 'Dernière convocation d’AG complète avec les annexes comptables', `#/d/${d.id}/pieces#p_convocation`)}
+      ${ok(recu('pv_ag'), 'PV d’AG des 3 dernières années', `#/d/${d.id}/pieces#p_pv_ag`)}
+      ${ok(d.lots.some(l => l.num), 'Lot(s) vendu(s)', `#/d/${d.id}/fiche`)}${ok(vendMail, 'E-mail du vendeur pour l’envoi de la facture', `#/d/${d.id}/fiche`)}</ul>`}
+    <div class="grid4">${field('Option urgente (4 h ouvrées, +40 €)', 'ped.urgence', { check: true })}${field('Compromis envisagé le', 'dates.compromis', { type: 'date' })}${field('Précisions', 'ped.notes', { cls: 'span2' })}</div>
+    <div class="row gap wrap modal-actions"><button class="btn primary" data-a="pedCA">📦 Demander le pré-état daté à ${COPRO_ASSISTANCE.nom}</button><a class="btn ghost" href="${COPRO_ASSISTANCE.urlPro}" target="_blank" rel="noopener">🌐 Commande en ligne</a></div></section>
+  <section class="card"><h2>Suivi</h2><div class="grid4">${field('Réalisé par', 'ped.prestataire', { options: [['copro-assistance', COPRO_ASSISTANCE.nom], ['syndic', 'Syndic'], ['vendeur', 'Le vendeur lui-même']], r: true })}
+    ${field('Commandé le', 'ped.commandeLe', { type: 'date', r: true })}${field('Reçu le', 'ped.recuLe', { type: 'date', r: true })}</div></section>
   <section class="card"><h2>Pièces utiles (${got}/${ps.length})</h2><div class="bar"><i style="width:${Math.round(got / ps.length * 100)}%"></i></div>
-    <ul class="plist">${ps.map(p => { const s = (d.pieces[p.id] || {}).s || ''; const st = PIECE_STATUTS.find(x => x.id === s); const n = filesFor(p.id).length;
-      return `<li><span class="badge ${st.cls}">${st.short}</span> <a href="#/d/${d.id}/pieces#p_${p.id}">${esc(p.label)}</a> ${n ? `<small class="muted">${n} fichier(s)</small>` : ''}</li>`; }).join('')}</ul>
-    <p class="small muted">Un dossier exploitable = règlement, PV des 3 dernières années, derniers appels, décomptes des 2 exercices, situation du compte, fonds de travaux. Ou un accès extranet autorisé par le vendeur.</p></section>
-  <section class="card"><h2>Commande</h2><div class="grid4">
-    ${field('Prestataire', 'ped.prestataire', { options: [['copro-assistance', COPRO_ASSISTANCE.nom], ['syndic', 'Syndic'], ['vendeur', 'Le vendeur le constitue lui-même']], r: true })}
-    ${field('Facturation', 'ped.facturation', { options: [['client', 'Lien de paiement au vendeur'], ['agence', 'Facture à mon agence']], r: true })}
-    ${field('Option urgente (4 h ouvrées)', 'ped.urgence', { check: true, r: true })}
-    ${field('Compromis envisagé le', 'dates.compromis', { type: 'date', r: true })}
-    ${field('Commandé le', 'ped.commandeLe', { type: 'date', r: true })}${field('Reçu le', 'ped.recuLe', { type: 'date', r: true })}
-    ${field('Précisions pour le prestataire', 'ped.notes', { area: true, cls: 'span4', r: true })}</div></section></div>
-  <aside class="card sticky"><h2>Demande pré-remplie</h2>
-    ${P.prestataire === 'copro-assistance' ? `<div class="row gap wrap"><button class="btn primary" data-a="pedCompose">✉️ Préparer le mail à ${COPRO_ASSISTANCE.nom}</button>
-      <a class="btn" href="${COPRO_ASSISTANCE.urlPro}" target="_blank" rel="noopener">🌐 Commande en ligne (pros)</a><button class="btn ghost" data-a="pedCopy">📋 Copier</button></div>
-      <p class="small muted">Pensez à joindre à votre mail les pièces « pré-état daté » reçues (onglet Pièces › ⋯ › Télécharger, ou export ZIP). Contact : ${COPRO_ASSISTANCE.email} · ${COPRO_ASSISTANCE.tel}</p>`
-      : P.prestataire === 'syndic' ? `<p>Commande au syndic : demandez un devis écrit (tarif et délai) avant toute commande.</p><button class="btn" data-a="compose" data-tpl="syndic_documents">✉️ Écrire au syndic</button>`
-      : `<p>Le vendeur réunit lui-même les informations : transmettez-lui la liste des pièces et la trame.</p><button class="btn" data-a="compose" data-tpl="vendeur_pieces">✉️ Liste des pièces au vendeur</button>`}
-    <pre class="preview mono">${esc(pedRequestText(d))}</pre></aside></div>`;
+    <ul class="plist">${ps.map(p => { const s = (d.pieces[p.id] || {}).s || ''; const stt = PIECE_STATUTS.find(x => x.id === s); const n = filesFor(p.id).length;
+      return `<li><span class="badge ${stt.cls}">${stt.short}</span> <a href="#/d/${d.id}/pieces#p_${p.id}">${esc(p.label)}</a> ${n ? `<small class="muted">${n} fichier(s)</small>` : ''}</li>`; }).join('')}</ul></section>`;
+}
+function pedMailCA(d) {
+  const P = d.ped, mode = P.mode || 'extranet', V = tplVars(d), vendMail = (d.vendeurs.find(p => p.email) || {}).email || '[e-mail du vendeur]';
+  const st = id => (d.pieces[id] || {}).s || '', mark = id => ['R', 'P', 'V'].includes(st(id)) ? '' : ' (à joindre)';
+  const head = `Bonjour,\n\nJe souhaite commander un pré-état daté pour le compte de mon client vendeur, ${names(d.vendeurs) || '[nom du vendeur]'}.\n\nBien : ${V.adresse_complete}\nLot(s) vendu(s) : ${d.lots.filter(l => l.num).map(l => l.num + (l.nature ? ' (' + l.nature.toLowerCase() + ')' : '')).join(', ') || '[n° de lots]'}\n`;
+  const body = mode === 'extranet'
+    ? `${head}\nOption 1 — accès à l’extranet syndic, avec l’accord du vendeur :\n- Syndic : ${d.copro.syndicNom || '[nom du syndic]'}${d.copro.syndicEmail ? ' (' + d.copro.syndicEmail + ')' : ''}\n- Adresse de l’extranet : ${d.copro.extranet || '[adresse]'}\n- Identifiant : ${d.copro.extranetLogin || '[identifiant]'}\n- Mot de passe : ${d.copro.extranetPass || '[mot de passe]'}\n`
+    : `${head}\nOption 2 — vous trouverez ci-joints les documents suivants :\n- Dernier appel de fonds${mark('appels_fonds')}\n- Derniers décomptes individuels des 2 derniers exercices${mark('decomptes')}\n- Dernière convocation d’AG complète avec les annexes comptables${mark('convocation')}\n- PV d’AG des 3 dernières années${mark('pv_ag')}\n${d.copro.syndicNom ? `\nSyndic : ${d.copro.syndicNom}\n` : ''}`;
+  return { to: COPRO_ASSISTANCE.email, subject: `Demande de pré-état daté — ${d.bien.adresse || 'bien'} — lot(s) ${lotsText(d)}`,
+    body: `${body}\nAdresse e-mail du vendeur pour l’envoi de la facture : ${vendMail}\n${d.dates.compromis ? `Compromis envisagé le ${fdate(d.dates.compromis)}.\n` : ''}${P.urgence ? 'Je souhaite l’option urgente (4 h ouvrées).\n' : ''}${P.notes ? '\nPrécisions : ' + P.notes + '\n' : ''}\nMerci de me confirmer la prise en charge.\n\n${signature()}` };
 }
 
 /* =========================================================================

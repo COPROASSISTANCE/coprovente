@@ -19,9 +19,11 @@ const COPRO_ASSISTANCE = {
 const PIECE_STATUTS = [
   { id: '',   label: 'À demander',  short: 'À dem.', cls: 'st-todo' },
   { id: 'D',  label: 'Demandée',    short: 'Dem.',   cls: 'st-asked' },
+  { id: 'P',  label: 'Partiellement reçue', short: 'Partiel', cls: 'st-update' },
   { id: 'R',  label: 'Reçue',       short: 'Reçue',  cls: 'st-ok' },
   { id: 'V',  label: 'À analyser',  short: 'À anal.', cls: 'st-check' },
   { id: 'A',  label: 'À actualiser', short: 'À act.', cls: 'st-update' },
+  { id: 'NR', label: 'Non réalisé sur la copropriété', short: 'Non réalisé', cls: 'st-na', copro: true },
   { id: 'SO', label: 'Sans objet (confirmé)', short: 'S.O.', cls: 'st-na' },
 ];
 
@@ -30,7 +32,7 @@ const PIECE_CATEGORIES = [
   { id: 'vendeur', label: 'Vendeur & propriété', icon: '👤', canal: 'vendeur' },
   { id: 'diag', label: 'Diagnostics du logement', icon: '🔎', canal: 'autre' },
   { id: 'copro_org', label: 'Copropriété — organisation', icon: '🏢', canal: 'syndic' },
-  { id: 'copro_compta', label: 'Copropriété — comptabilité & appels', icon: '💶', canal: 'syndic' },
+  { id: 'copro_compta', label: 'Copropriété — comptabilité & finances', icon: '💶', canal: 'syndic' },
   { id: 'copro_tech', label: 'Copropriété — technique & travaux', icon: '🛠️', canal: 'syndic' },
   { id: 'acquereur', label: 'Acquéreur', icon: '🤝', canal: 'acquereur' },
   { id: 'transaction', label: 'Transaction', icon: '📑', canal: 'notaire' },
@@ -43,6 +45,9 @@ const PIECES = [
   // Vendeur
   { id: 'titre', cat: 'vendeur', label: 'Titre de propriété complet', hint: 'Coordonnées de tous les titulaires de droits. Comparez la désignation du titre, du mandat, du règlement et du mesurage.', ped: false, kw: ['titre', 'acte de vente', 'attestation de propriete', 'acte authentique'] },
   { id: 'etat_civil', cat: 'vendeur', label: 'État civil, régime matrimonial, pièces d’identité', hint: 'Indivision, démembrement, succession ou représentation éventuelle.', kw: ['identite', 'cni', 'passeport', 'livret de famille', 'etat civil'] },
+  { id: 'photos', cat: 'vendeur', opt: true, label: 'Photos du bien', hint: 'Utilisées dans le rendu d’estimation et la fiche de commercialisation (avec l’accord du vendeur).', multi: true, kw: ['photo', 'img', 'jpg', 'jpeg', 'png', 'heic'] },
+  { id: 'rapport_estim', cat: 'vendeur', opt: true, label: 'Rapport d’estimation (versions)', hint: 'Chaque version déposée est conservée.', multi: true, kw: ['estimation', 'avis de valeur'] },
+  { id: 'avenant', cat: 'vendeur', opt: true, label: 'Avenants au mandat', hint: 'Baisse de prix, prolongation, changement de conditions.', multi: true, kw: ['avenant'] },
   { id: 'mandat', cat: 'vendeur', label: 'Mandat de vente signé', hint: 'Désignation exacte de tous les lots et dépendances. Numéro au registre des mandats.', kw: ['mandat'] },
   { id: 'taxe_fonciere', cat: 'vendeur', label: 'Dernier avis de taxe foncière', hint: 'Utile au prorata de taxe foncière au jour de l’acte.', kw: ['taxe fonciere', 'foncier'] },
   { id: 'plans', opt: true, cat: 'vendeur', label: 'Plans & documents de modification des lots', hint: 'Lot réuni, divisé, transformé ? Autorisations d’AG et modificatifs.', kw: ['plan'] },
@@ -52,11 +57,11 @@ const PIECES = [
   { id: 'sinistres', opt: true, cat: 'vendeur', label: 'Déclarations de sinistre, expertises, indemnisations', hint: 'Concernant le logement.', kw: ['sinistre', 'expertise', 'degat des eaux'] },
   // Diagnostics
   { id: 'dpe', cat: 'diag', label: 'DPE (diagnostic de performance énergétique)', hint: 'Validité 10 ans (les DPE réalisés avant le 1er juillet 2021 ne sont plus valables). Classes à afficher dans l’annonce.', validite: 120, kw: ['dpe', 'performance energetique'] },
-  { id: 'amiante', cat: 'diag', label: 'Amiante', hint: 'Permis de construire antérieur au 1er juillet 1997. Validité illimitée si absence d’amiante.', validite: null, cond: d => !d.bien.annee || +d.bien.annee < 1997, kw: ['amiante'] },
-  { id: 'plomb', cat: 'diag', label: 'Plomb (CREP)', hint: 'Immeuble construit avant le 1er janvier 1949. Illimité si négatif, 1 an si positif.', validite: 12, cond: d => !d.bien.annee || +d.bien.annee < 1949, kw: ['plomb', 'crep'] },
-  { id: 'elec', cat: 'diag', label: 'Électricité', hint: 'Installation de plus de 15 ans. Validité 3 ans.', validite: 36, kw: ['electricite', 'elec'] },
-  { id: 'gaz', opt: true, cat: 'diag', label: 'Gaz', hint: 'Installation de plus de 15 ans. Validité 3 ans.', validite: 36, kw: ['gaz'] },
-  { id: 'termites', opt: true, cat: 'diag', label: 'Termites', hint: 'Zone délimitée par arrêté préfectoral. Validité 6 mois.', validite: 6, kw: ['termite'] },
+  { id: 'amiante', cat: 'diag', label: 'Diagnostic amiante', hint: 'Permis de construire antérieur au 1er juillet 1997. Validité illimitée si absence d’amiante.', validite: null, cond: d => !d.bien.annee || +d.bien.annee < 1997, kw: ['amiante'] },
+  { id: 'plomb', cat: 'diag', label: 'Diagnostic plomb (CREP)', hint: 'Immeuble construit avant le 1er janvier 1949. Illimité si négatif, 1 an si positif.', validite: 12, cond: d => !d.bien.annee || +d.bien.annee < 1949, kw: ['plomb', 'crep'] },
+  { id: 'elec', cat: 'diag', label: 'Diagnostic électrique', hint: 'Installation de plus de 15 ans. Validité 3 ans.', validite: 36, kw: ['electricite', 'elec'] },
+  { id: 'gaz', opt: true, cat: 'diag', label: 'Diagnostic gaz', hint: 'Installation de plus de 15 ans. Validité 3 ans.', validite: 36, kw: ['gaz'] },
+  { id: 'termites', opt: true, cat: 'diag', label: 'Diagnostic termites', hint: 'Zone délimitée par arrêté préfectoral. Validité 6 mois.', validite: 6, kw: ['termite'] },
   { id: 'erp', cat: 'diag', label: 'État des risques (ERP)', hint: 'Toujours requis. Validité 6 mois — à actualiser avant compromis puis acte.', validite: 6, kw: ['erp', 'etat des risques', 'georisques'] },
   { id: 'bruit', opt: true, cat: 'diag', label: 'Bruit (plan d’exposition aéroport)', hint: 'Si zone de bruit d’un aérodrome.', kw: ['bruit'] },
   { id: 'carrez', cat: 'diag', label: 'Mesurage loi Carrez', hint: 'Adapté aux lots vendus et cohérent avec le titre et le règlement.', kw: ['carrez', 'mesurage', 'superficie'] },
@@ -66,7 +71,6 @@ const PIECES = [
   { id: 'modificatifs', cat: 'copro_org', label: 'Modificatifs publiés', hint: 'Un fichier ancien peut ne pas décrire la situation actuelle. Vérifiez les numéros des lots vendus.', ped: true, extranet: true, kw: ['modificatif'] },
   { id: 'fiche_synth', cat: 'copro_org', label: 'Fiche synthétique à jour', hint: 'Identification, organisation, données financières globales, immatriculation.', ped: true, extranet: true, kw: ['fiche synthetique'] },
   { id: 'carnet_entretien', cat: 'copro_org', label: 'Carnet d’entretien de l’immeuble', hint: 'Contrats, entretien et travaux de l’immeuble.', ped: true, extranet: true, kw: ['carnet d entretien', 'carnet entretien'] },
-  { id: 'notice_info', opt: true, cat: 'copro_org', label: 'Notice d’information (droits & obligations des copropriétaires)', hint: 'À remettre à l’acquéreur.', kw: ['notice'] },
   { id: 'pv_ag', cat: 'copro_org', label: 'PV de toutes les AG des 3 dernières années', hint: 'Les PV des 3 dernières années — pas seulement 3 PV. Inclure les AG extraordinaires.', ped: true, extranet: true, multi: true, kw: ['pv', 'proces verbal', 'proces-verbal', 'assemblee'] },
   { id: 'convocation', cat: 'copro_org', label: 'Dernière convocation & annexes', hint: 'La convocation contient les projets ; seul le PV constate les décisions.', ped: true, kw: ['convocation', 'ordre du jour'] },
   { id: 'contrat_syndic', cat: 'copro_org', label: 'Contrat de syndic en cours', hint: 'Fait partie de la liste minimale de l’extranet.', extranet: true, kw: ['contrat de syndic'] },
@@ -74,9 +78,6 @@ const PIECES = [
   // Copro compta
   { id: 'appels_fonds', cat: 'copro_compta', label: 'Appels de fonds des 12 derniers mois', hint: 'Charges courantes, travaux, appels exceptionnels. Un appel ne prouve pas un paiement.', ped: true, extranet: true, multi: true, kw: ['appel de fonds', 'appel', 'avis d echeance'] },
   { id: 'decomptes', cat: 'copro_compta', label: 'Décomptes individuels des 2 derniers exercices', hint: 'Charges courantes et hors budget payées par le vendeur sur les deux exercices précédant la vente.', ped: true, extranet: true, multi: true, kw: ['decompte', 'repartition', 'regularisation'] },
-  { id: 'annexes_compta', cat: 'copro_compta', label: 'Annexes comptables (1 à 5) & budget prévisionnel', hint: 'Impayés globaux et dette fournisseurs (annexe 1), budget, opérations ouvertes (annexe 5).', ped: true, kw: ['annexe', 'budget', 'comptes'] },
-  { id: 'compte_vendeur', cat: 'copro_compta', label: 'Situation du compte vendeur', hint: 'Échéancier éventuel et détail des règlements récents.', ped: true, extranet: true, kw: ['situation de compte', 'releve de compte', 'extrait de compte', 'compte coproprietaire'] },
-  { id: 'fonds_travaux', cat: 'copro_compta', label: 'Fonds de travaux : part du lot & dernière cotisation', hint: 'La part rattachée au lot principal — pas le fonds global de l’annexe 1.', ped: true, extranet: true, kw: ['fonds de travaux', 'fonds travaux'] },
   { id: 'ped', cat: 'copro_compta', label: 'Pré-état daté', hint: 'Informations financières à remettre à l’acquéreur au plus tard à la promesse (CCH L.721-2).', kw: ['pre-etat', 'pre etat', 'ped'] },
   { id: 'etat_date', cat: 'copro_compta', label: 'État daté (syndic, pour l’acte)', hint: 'Demandé au syndic en vue de l’acte authentique — distinct du pré-état daté.', kw: ['etat date'] },
   // Copro technique
@@ -193,7 +194,7 @@ const ETAPES = [
       ['manquants', 'Documents manquants sur l’extranet signalés au syndic (mise en ligne gratuite)', {}],
     ],
     conseils: [
-      'L’extranet peut contenir des données personnelles : ne téléchargez que les pièces utiles, et ne conservez jamais le mot de passe dans un courriel ou une note.',
+      'L’extranet peut contenir des données personnelles : ne téléchargez que les pièces utiles. Les identifiants se notent dans la fiche (stockés sur cet appareil) et le vendeur change son mot de passe après la collecte.',
       'Formulation simple pour le vendeur : « Vous pouvez modifier temporairement votre mot de passe pendant la vente. Nous récupérons uniquement les documents nécessaires, puis vous le modifiez à nouveau. »',
       'Si un document de la liste minimale manque sur l’extranet, le vendeur peut demander au syndic de le mettre en ligne gratuitement (art. 18 loi 1965, décret 2019-502).',
     ],
@@ -298,6 +299,7 @@ const ETAPES = [
 ];
 
 const PHASES = [
+  { id: 'estimation', label: 'Estimation', color: '#8a6fb3' },
   { id: 'mandat', label: 'Mandat', color: '#5b7a99' },
   { id: 'commercialisation', label: 'Commercialisation', color: '#1a9ba8' },
   { id: 'offre', label: 'Offre / pré-compromis', color: '#c58a12' },
@@ -358,12 +360,9 @@ Merci d’avance,
 
 Les documents de copropriété nécessaires à la vente devront, pour l’essentiel, être transmis au notaire et à l’acquéreur. Un accès temporaire à votre extranet syndic ({{syndic_nom}}) me permettrait de récupérer immédiatement les versions à jour, d’éviter les oublis et de préparer le pré-état daté sans relances successives.
 
-Je vous propose le protocole suivant :
-- vous modifiez temporairement votre mot de passe pendant la vente ;
-- je récupère uniquement les documents nécessaires au dossier ;
-- vous le modifiez à nouveau dès la collecte terminée.
+Je vous propose de configurer un mot de passe provisoire, le temps que la vente se fasse.
 
-Merci de ne pas m’envoyer le mot de passe par courriel : communiquons-le de vive voix ou par SMS. Si vous préférez ne pas transmettre d’accès, pouvez-vous exporter les rubriques « Documents », « Comptes » et « Appels de fonds » et me les adresser ?
+Si vous préférez ne pas transmettre d’accès, pouvez-vous exporter les rubriques « Documents », « Comptes » et « Appels de fonds » puis me les adresser ?
 
 {{signature}}` },
   { id: 'vendeur_offre', canal: 'vendeur', titre: 'Transmission d’une offre d’achat',
@@ -398,11 +397,12 @@ Ma recommandation : [ ]
     sujet: 'Pré-état daté : anticiper le compromis — {{adresse}}',
     corps: `Bonjour {{vendeur_civilite}},
 
-Avant le compromis, la loi impose de remettre à l’acquéreur les informations financières de la copropriété (charges payées sur les deux derniers exercices, sommes susceptibles d’être dues, impayés globaux, fonds de travaux…). C’est ce qu’on appelle le « pré-état daté ».
+Avant la signature du compromis, la loi impose au vendeur de remettre à l’acquéreur les informations financières de la copropriété (charges payées sur les deux derniers exercices, sommes susceptibles d’être dues, impayés globaux, fonds de travaux…). C’est ce qu’on appelle le « pré-état daté ». Il est indispensable pour purger le délai de rétractation loi SRU de l'acquéreur, donc pour pouvoir signer l'acte authentique final.
 
-Vous êtes libre de le réaliser vous-même, de le commander à votre syndic, ou de le confier à un prestataire spécialisé. Copro-Assistance le prépare ${COPRO_ASSISTANCE.delai} pour ${COPRO_ASSISTANCE.prix} à partir des documents du dossier (le syndic facture en moyenne plus de 300 € avec un délai d’environ une semaine et demie, selon l’observatoire 2026 de Copro-Assistance). Le choix vous appartient.
+Vous êtes libre de le réaliser vous-même (sous réserve de bien respecter le formalisme légal), de le commander à votre syndic, ou de le confier à un prestataire spécialisé. Copro-Assistance le prépare sous 24 h pour 60 € TTC à partir des documents du dossier (le syndic facture en moyenne plus de 300 € avec un délai d’environ une semaine). Le choix vous appartient naturellement mais je tenais à vous faire savoir que cette solution d'économie concrète existe.
 
 Souhaitez-vous que je lance la demande pour vous ?
+N'hésitez pas à revenir vers moi pour tout complément d'information
 
 {{signature}}` },
   { id: 'vendeur_merci', canal: 'vendeur', titre: 'Remerciements & demande d’avis',
@@ -654,6 +654,40 @@ const GUIDES = [
 <p>Si les PV n’ont pu être obtenus auprès du syndic, conservez vos demandes et informez le notaire : l’article L.721-2 prévoit ce cas. N’en déduisez pas seul une dispense générale.</p>` },
   { id: 'annonce', titre: 'Mentions obligatoires de l’annonce en copropriété', tags: 'annonce publicité alur', html: `
 <ul><li>Le fait que le bien est soumis au statut de la copropriété.</li><li>Le nombre de lots de la copropriété.</li><li>Le montant moyen annuel de la quote-part du vendeur dans le budget prévisionnel (charges courantes).</li><li>Le cas échéant, l’existence d’une procédure en cours (plan de sauvegarde, administration provisoire…).</li><li>Classes énergie (DPE) et climat (GES), estimation des dépenses annuelles d’énergie.</li><li>Prix et honoraires : à la charge de qui, et en % du prix hors honoraires si à la charge de l’acquéreur.</li></ul>` },
+];
+
+/* ---------- Inventaire des équipements de la copropriété ---------- */
+/* [clé, libellé, type] — type : 'oni' (Oui / Non / Indéterminé), 'num' (nombre), 'select' (liste) */
+const EQUIPEMENTS = [
+  { titre: 'Extérieur', items: [['cloture', 'Clôture'], ['parkingsExt', 'Parkings extérieurs', 'num'], ['eclairageExt', 'Éclairage extérieur'], ['portail', 'Portail / barrière automatique'],
+    ['porteGarage', 'Porte de garage'], ['nbGarages', 'Nombre de garages', 'num'], ['espacesVerts', 'Espaces verts'], ['sprinkler', 'Sprinkler'], ['aireJeux', 'Aire de jeux'], ['tennis', 'Court de tennis']] },
+  { titre: 'Contrôle d’accès', items: [['interphone', 'Interphone'], ['videophone', 'Vidéophone'], ['digicode', 'Digicode'], ['telpass', 'Telpass'], ['vigik', 'Vigik'],
+    ['gardien', 'Gardien (loge)'], ['alarme', 'Alarme'], ['horloge', 'Horloge automatique']] },
+  { titre: 'Équipements divers', items: [['antenne', 'Antenne collective'], ['antenneType', 'Si oui, de quel type ?', 'select', ['', 'Hertzienne (TNT)', 'Parabole satellite', 'Hertzienne + satellite', 'Autre']],
+    ['fibre', 'Fibre optique'], ['cable', 'Réseau câblé'], ['monteCharge', 'Monte-charge'], ['telesurveillance', 'Télésurveillance'], ['groupeElectrogene', 'Groupe électrogène'],
+    ['aspersion', 'Système d’aspersion sécurité incendie', 'num'], ['detectionIncendie', 'Détection incendie'], ['vmc', 'VMC'], ['climatisation', 'Climatisation'], ['surpresseur', 'Surpresseur'],
+    ['pompeRelevage', 'Pompe de relevage'], ['colonneSeche', 'Colonne sèche'], ['videOrdures', 'Vide-ordures'], ['blocSecours', 'Bloc de secours'], ['fermePorte', 'Ferme-porte'],
+    ['porteCoupeFeu', 'Porte coupe-feu'], ['colonneTerre', 'Colonne de terre'], ['assainissement', 'Assainissement collectif ou communal'], ['extracteurs', 'Extracteurs']] },
+  { titre: 'Réseau sanitaire', items: [['eauFroideColl', 'Eau froide collective'], ['eauChaudeColl', 'Eau chaude collective']] },
+  { titre: 'Compteurs', items: [['cptEauFroide', 'Eau froide'], ['cptEauChaude', 'Eau chaude'], ['releveDistance', 'Relevés à distance'], ['cptCalories', 'De calories'], ['repartiteurs', 'Répartiteurs de calories']] },
+];
+
+/* ---------- Mentions obligatoires d'une annonce (Service Public, vérifié le 12/09/2025) ---------- */
+const MENTIONS_ANNONCE = [
+  ['Type de bien (appartement, loft…)', d => !!d.bien.type],
+  ['Prix de vente', d => !!num(d.com.prixActuel || d.mandat.prix)],
+  ['Situation géographique', d => !!d.bien.ville],
+  ['Superficie et composition', d => !!d.bien.surface && !!d.bien.pieces],
+  ['État du bien (travaux à prévoir, rénové…)', d => !!(d.com.annonce.etat)],
+  ['Bien soumis au statut de la copropriété', () => true],
+  ['Nombre de lots de la copropriété', d => !!d.copro.nbLots],
+  ['Montant moyen annuel des charges payées par le vendeur', d => !!num(d.copro.charges)],
+  ['Procédure en cours (mesures préventives, plan de sauvegarde…) ou absence vérifiée', d => d.copro.procedure !== '?'],
+  ['DPE : classes énergie et climat, dépenses annuelles estimées et année de référence', d => !!d.bien.dpe && !!d.bien.ges],
+  ['Mention « logement à consommation énergétique excessive » si classé F ou G', d => !['F', 'G'].includes(d.bien.dpe) || true],
+  ['Mention Géorisques : « Les informations sur les risques auxquels ce bien est exposé sont disponibles sur le site Géorisques : www.georisques.gouv.fr »', () => true],
+  ['Honoraires : à la charge de qui ; si acquéreur : prix avec et sans honoraires + pourcentage TTC', d => !!d.mandat.charge],
+  ['Agence : numéro SIREN et mention de l’inscription au guichet unique (ou RSAC du mandataire)', () => !!(App.settings.agent.siren || App.settings.agent.rsac)],
 ];
 
 /* ---------- Classification automatique de fichiers ---------- */

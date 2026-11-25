@@ -84,7 +84,7 @@ function viewGuides() {
     <input class="search" data-t="gq" value="${esc(App.tools.gq)}" placeholder="Rechercher : PV, fonds de travaux, extranet…"></div>
   ${gs.map((g, i) => `<details class="card guide" ${q || i === 0 ? 'open' : ''}><summary><h2>${esc(g.titre)}</h2></summary><div class="guide-body">${g.html}</div></details>`).join('') || '<p class="muted">Aucun résultat.</p>'}
   <section class="card cta"><h2>Besoin d’un pré-état daté ?</h2><p>${COPRO_ASSISTANCE.nom} réalise le dossier administratif et financier ${COPRO_ASSISTANCE.delai} pour ${COPRO_ASSISTANCE.prix}.</p>
-    <a class="btn primary" href="${COPRO_ASSISTANCE.urlPro}" target="_blank" rel="noopener">Espace professionnels</a> <a class="btn" href="${COPRO_ASSISTANCE.site}" target="_blank" rel="noopener">copro-assistance.fr</a></section>`;
+    <a class="btn primary" href="${COPRO_ASSISTANCE.site}" target="_blank" rel="noopener">Copro-Assistance.fr</a></section>`;
 }
 
 /* ---------- Paramètres ---------- */
@@ -92,6 +92,13 @@ function viewParametres() {
   const s = { settings: true };
   return `<div class="page-head"><div><h1>Paramètres</h1><p class="muted">Tout est enregistré localement dans ce navigateur.</p></div></div>
   <section class="card row between wrap gap"><div><h2>👤 Mon profil</h2><p class="small muted">Nom, coordonnées, carte professionnelle, signature et objectif annuel.</p></div><a class="btn" href="#/profil">Modifier mon profil</a></section>
+  <section class="card"><h2>✨ Assistant IA (facultatif)</h2>
+    <p>Avec une clé API Claude, l’application rédige les comptes rendus de visite, annonces, bilans vendeur, analyses d’estimation et e-mails. Sans clé, une rédaction automatique à partir de modèles reste disponible.</p>
+    <div class="grid4">${field('Clé API Claude (console.anthropic.com)', 'ai.key', { settings: true, type: 'password', cls: 'span3', ph: 'sk-ant-…', help: 'Stockée uniquement dans ce navigateur. Les données du dossier utiles à la rédaction sont envoyées à Anthropic à chaque génération ; l’usage est facturé sur votre compte Anthropic.' })}
+    ${field('Modèle', 'ai.model', { settings: true, options: [['claude-opus-5-5', 'Claude Opus 5.5 (recommandé)'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (économique)']] })}</div></section>
+  <section class="card"><h2>⏱️ Délais d’alerte</h2><div class="grid4">
+    ${field('Bien sans visite depuis (jours)', 'delais.inactivite', { settings: true, type: 'number' })}${field('Sans compte rendu vendeur depuis (jours)', 'delais.bilan', { settings: true, type: 'number' })}
+    ${field('Relance après restitution d’estimation (jours)', 'delais.relanceEstim', { settings: true, type: 'number' })}${field('Rappel avant échéance de mandat (jours)', 'delais.rappelMandat', { settings: true, type: 'number' })}</div></section>
   <section class="card"><h2>💾 Sauvegarde & transfert</h2>
     <p>Vos données ne sont stockées que sur cet appareil. Exportez régulièrement une sauvegarde (dossiers + fichiers), par exemple vers votre Drive.</p>
     <div class="row gap wrap"><button class="btn primary" data-a="backup">⬇️ Exporter une sauvegarde complète</button><label class="btn">⬆️ Restaurer une sauvegarde<input type="file" accept=".json,application/json" hidden data-restore></label>
@@ -246,7 +253,7 @@ async function restore(file) {
     for (const d of data.dossiers) await Store.putDossier(d);
     for (const f of data.files) { const blob = await (await fetch(f.data)).blob(); delete f.data; await Store.putFile({ ...f, blob }); }
     if (data.settings) { App.settings = { ...structuredClone(DEFAULT_SETTINGS), ...data.settings }; saveSettings(); }
-    if (data.crm) { for (const k of ['prospects', 'estimations', 'visites']) { const ids = new Set((data.crm[k] || []).map(x => x.id)); App.crm[k] = App.crm[k].filter(x => !ids.has(x.id)).concat(data.crm[k] || []); } saveCrm(); }
+    if (data.crm) { data.crm = migrateCrm(data.crm); for (const k of ['contacts', 'estimations', 'visites']) { const ids = new Set((data.crm[k] || []).map(x => x.id)); App.crm[k] = App.crm[k].filter(x => !ids.has(x.id)).concat(data.crm[k] || []); } saveCrm(); }
     App.dossiers = await Store.allDossiers();
     toast('Sauvegarde restaurée ✔'); location.hash = '#/';  render();
   } catch (e) { toast(e.message, 'err'); }
@@ -342,7 +349,7 @@ const ACT = {
   delAppel(el) { if (confirmBox('Supprimer cette fiche ?')) { App.current.appels.splice(+el.dataset.i, 1); saveDossier(); rerender(); } },
   addLigne(el) { App.current.appels[+el.dataset.i].lignes.push({ nature: '', cat: 'courant' }); saveDossier(); rerender(); },
   delLigne(el) { App.current.appels[+el.dataset.i].lignes.splice(+el.dataset.j, 1); saveDossier(); rerender(); },
-  annonceCopro() { const t = annonceText(App.current); openModal('Mentions copropriété de l’annonce', `<textarea id="ann" rows="9">${esc(t)}</textarea><p class="small muted">Complétez les zones entre crochets. Données issues de la fiche (onglet Fiche › Copropriété).</p><div class="row gap modal-actions"><button class="btn primary" data-a="copyAnn">📋 Copier</button></div>`); },
+  annonceCopro() { const t = annonceText(App.current); openModal('Les mentions obligatoires pour l’annonce en copropriété', `<textarea id="ann" rows="9">${esc(t)}</textarea><p class="small muted">Complétez les zones entre crochets. Données issues de la fiche (onglet Fiche › Copropriété).</p><div class="row gap modal-actions"><button class="btn primary" data-a="copyAnn">📋 Copier</button></div>`); },
   copyAnn() { copyText($('#ann').value); },
   calcRetract() {
     const d = App.current;
@@ -474,10 +481,12 @@ async function boot() {
   try {
     await Store.open();
     const s = await Store.get('settings');
-    if (s) App.settings = { ...structuredClone(DEFAULT_SETTINGS), ...s, agent: { ...DEFAULT_SETTINGS.agent, ...(s.agent || {}) } };
+    if (s) App.settings = { ...structuredClone(DEFAULT_SETTINGS), ...s, agent: { ...DEFAULT_SETTINGS.agent, ...(s.agent || {}) }, delais: { ...DEFAULT_SETTINGS.delais, ...(s.delais || {}) }, ai: { ...DEFAULT_SETTINGS.ai, ...(s.ai || {}) } };
     App.dossiers = await Store.allDossiers();
     const crm = await Store.get('crm');
-    if (crm) App.crm = { prospects: [], estimations: [], visites: [], ...crm };
+    App.crm = migrateCrm(crm);
+    App.dossiers.forEach(ensureDossier);
+    if (crm && crm.prospects) Store.set('crm', App.crm);
   } catch (e) {
     $('#view').innerHTML = `<div class="card"><h2>Stockage indisponible</h2><p>Votre navigateur bloque le stockage local (navigation privée ?). ${esc(e.message)}</p></div>`;
     return;
