@@ -49,7 +49,7 @@ function agentTop(right) {
 }
 function agentFoot(extra = '') {
   const a = App.settings.agent;
-  return `<div class="foot">${extra}${[a.siren ? 'SIREN ' + a.siren : '', a.rsac ? 'RSAC ' + a.rsac : '', a.carte ? 'Carte professionnelle ' + a.carte : ''].filter(Boolean).map(esc).join(' · ')}</div>`;
+  return `<div class="foot">${extra}${[a.siren ? 'SIREN ' + a.siren : '', a.rsac ? 'RSAC ' + a.rsac : '', a.carte ? 'Carte professionnelle ' + a.carte : ''].filter(Boolean).map(esc).join(' · ')}<br>${esc(BRAND.docPied)}</div>`;
 }
 async function photosOf(d, max = 4) {
   const files = (await Store.filesOf(d.id)).filter(f => f.pieceId === 'photos' && /^image\//.test(f.type || '')).slice(0, max);
@@ -299,10 +299,11 @@ function viewOutilsHub(sub) {
   if (sub === 'mail') return toolMail();
   if (sub === 'fiche' || sub === 'annonce') return toolPickBien(sub);
   if (sub === 'travaux') return toolTravaux();
+  if (sub === 'resolution') return toolResolution();
   if (sub === 'facture') return `<a href="#/outils" class="muted small">← Outils</a><div class="page-head"><div><h1>🧾 Facture d’honoraires</h1><p class="muted">Pré-remplie depuis le bien, le mandat et votre profil. Numérotation automatique.</p></div></div><section class="card">${factureForm(App.dossiers.find(d => d.id === App.factureBien) || null)}</section>`;
   const card = (href, icon, t, s) => `<a class="tool" href="${href}"><span>${icon}</span><b>${t}</b><small>${s}</small></a>`;
   return `<div class="page-head"><div><h1>🧰 Outils</h1><p class="muted">${aiOn() ? '✨ Assistant IA activé.' : 'Astuce : activez l’assistant IA dans Paramètres pour une rédaction encore plus fine.'}</p></div></div>
-  <div class="tools-grid">${card('#/outils/offre', '✍️', 'Proposition d’offre d’achat', 'Pré-remplie, à compléter et signer par l’acquéreur')}${card('#/outils/facture', '🧾', 'Facture d’honoraires', 'Numérotée, pré-remplie depuis le dossier')}${card('#/outils/travaux', '🔨', 'Simulateur de budget travaux', 'Fourchette par poste ou au m², PDF pour l’acquéreur')}${card('#/outils/mail', '✉️', 'Rédiger un e-mail', 'Dites à qui vous écrivez et votre objectif')}
+  <div class="tools-grid">${card('#/outils/offre', '✍️', 'Proposition d’offre d’achat', 'Pré-remplie, à compléter et signer par l’acquéreur')}${card('#/outils/facture', '🧾', 'Facture d’honoraires', 'Numérotée, pré-remplie depuis le dossier')}${card('#/outils/travaux', '🔨', 'Simulateur de budget travaux', 'Fourchette par poste ou au m², PDF pour l’acquéreur')}${card('#/outils/resolution', '📮', 'Inscription à l’ordre du jour (travaux)', 'Courrier LRAR au syndic + projet de résolution, travaux privatifs sur parties communes')}${card('#/outils/mail', '✉️', 'Rédiger un e-mail', 'Dites à qui vous écrivez et votre objectif')}
     ${card('#/outils/fiche', '🖨️', 'Fiche de commercialisation', 'Fiche PDF du bien avec photos et mentions')}${card('#/outils/annonce', '📝', 'Annonce', 'Rédaction + pense-bête des mentions obligatoires')}
     ${card('#/calculs', '🧮', 'Calculateurs', 'Honoraires, frais, prorata, délais, prêt')}${card('#/modeles', '📨', 'Modèles de mails', 'Vos modèles réutilisables')}${card('#/guides', '📚', 'Guides copropriété', 'Les guides Copro-Assistance')}</div>`;
 }

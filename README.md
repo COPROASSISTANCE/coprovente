@@ -2,7 +2,7 @@
 
 **L'assistant de suivi commercial des agents et mandataires immobiliers, pensé pour le téléphone : savoir qui relancer, quelle action réaliser et où en est chaque vente.**
 
-Libre et gratuit (licence MIT). Spécialisé dans la vente en copropriété, avec les guides pratiques de [Copro-Assistance](https://www.copro-assistance.fr).
+Libre et gratuit (licence GNU GPL v3 avec conditions d'attribution). Proposé par [Copro-Assistance](https://www.copro-assistance.fr), spécialisé dans la vente en copropriété.
 
 ▶ **Essayer en ligne :** https://coproassistance.github.io/coprovente/
 
@@ -69,4 +69,15 @@ Information générale, à adapter au bien, à la copropriété et aux demandes 
 
 ## Licence
 
-MIT : libre d'utilisation, de modification et de redistribution.
+**GNU GPL v3**, complétée de conditions supplémentaires (article 7) : voir [LICENSE](LICENSE).
+
+- Vous pouvez utiliser, copier, modifier et redistribuer l'application, gratuitement.
+- Toute copie ou version modifiée doit rester sous la même licence, avec son code source, et indiquer qu'elle a été modifiée.
+- Les mentions Copro-Assistance (encart « Proposé par Copro-Assistance », pied de page de l'application et des documents générés, guides, fichier `brand.js`) doivent être conservées.
+- Le nom et la marque Copro-Assistance ne peuvent pas être utilisés à d'autres fins.
+
+Les versions publiées avant ce changement restent sous licence MIT.
+
+## Guides Copro-Assistance
+
+Le dossier `guides/` contient les guides pratiques et modèles de Copro-Assistance au format PDF (prise de mandat, checklist vendeur, appel de fonds, annexes comptables, pouvoir d'AG). Ils se téléchargent depuis la page *Guides copropriété* et peuvent être diffusés gratuitement, sans modification.

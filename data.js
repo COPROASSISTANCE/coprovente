@@ -4,16 +4,7 @@
    contenus des guides. Tout est modifiable ici sans toucher au reste du code.
    ========================================================================= */
 
-const COPRO_ASSISTANCE = {
-  nom: 'Copro-Assistance',
-  email: 'contact@copro-assistance.fr',
-  tel: '01 72 68 22 52',
-  site: 'https://www.copro-assistance.fr',
-  urlCommande: 'https://www.copro-assistance.fr/commander-mon-pre-etat-date',
-  urlPro: 'https://www.copro-assistance.fr/pre-etat-en-ligne-pour-professionnels',
-  prix: '60 € TTC',
-  delai: 'sous 24 h',
-};
+/* Les coordonnées Copro-Assistance (COPRO_ASSISTANCE) sont définies dans brand.js */
 
 /* ---------- Statuts des pièces ---------- */
 const PIECE_STATUTS = [

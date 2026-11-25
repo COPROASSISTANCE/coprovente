@@ -69,5 +69,8 @@ Les modèles de mails se modifient aussi directement dans l'application (menu *M
 ### Se faire aider par une IA
 Demandez par exemple à Claude : *« Voici le fichier data.js de mon application CoproVente, ajoute une pièce “Attestation d'assurance habitation” dans la catégorie vendeur »*, puis remplacez le fichier par la version proposée.
 
+### Ce qui ne se modifie pas
+Les mentions Copro-Assistance (fichier `brand.js` : encart « Proposé par Copro-Assistance », pied de page de l'application et des documents générés, guides, coordonnées du pré-état daté) font partie de l'application et doivent être conservées : c'est une condition de la licence (GNU GPL v3 avec conditions supplémentaires, voir le fichier `LICENSE`). Si vous redistribuez une version modifiée, indiquez qu'elle a été modifiée et laissez-la sous la même licence.
+
 ## 6. Mettre à jour
 Quand une nouvelle version sort, téléchargez le nouveau ZIP et remplacez les fichiers de votre dossier, **sauf** `config.js` et `data.js` si vous les avez personnalisés. Vos dossiers ne sont pas touchés (ils sont dans le navigateur). Gardez le même dossier et le même navigateur.

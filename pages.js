@@ -82,6 +82,8 @@ function viewGuides() {
   const gs = GUIDES.filter(g => !q || normalize(g.titre + ' ' + g.tags + ' ' + g.html.replace(/<[^>]+>/g, ' ')).includes(q));
   return `<div class="page-head"><div><h1>Guides & conseils</h1><p class="muted">Synthèse des guides pratiques Copro-Assistance (édition 2026). Information générale, sans substitution à un conseil personnalisé.</p></div>
     <input class="search" data-t="gq" value="${esc(App.tools.gq)}" placeholder="Rechercher : PV, fonds de travaux, extranet…"></div>
+  <section class="card"><h2>📥 Les guides Copro-Assistance en PDF</h2><p class="small muted">À télécharger, imprimer ou transmettre à vos clients vendeurs.</p>
+    <div class="dl-grid">${GUIDES_PDF.map(([f, t]) => `<a class="dl" href="guides/${f}" download target="_blank" rel="noopener"><span>📄</span><b>${esc(t)}</b><small>PDF · Copro-Assistance</small></a>`).join('')}</div></section>
   ${gs.map((g, i) => `<details class="card guide" ${q || i === 0 ? 'open' : ''}><summary><h2>${esc(g.titre)}</h2></summary><div class="guide-body">${g.html}</div></details>`).join('') || '<p class="muted">Aucun résultat.</p>'}
   <section class="card cta"><h2>Besoin d’un pré-état daté ?</h2><p>${COPRO_ASSISTANCE.nom} réalise le dossier administratif et financier ${COPRO_ASSISTANCE.delai} pour ${COPRO_ASSISTANCE.prix}.</p>
     <a class="btn primary" href="${COPRO_ASSISTANCE.site}" target="_blank" rel="noopener">Copro-Assistance.fr</a></section>`;
@@ -102,8 +104,10 @@ function viewParametres() {
   <section class="card"><h2>💾 Sauvegarde & transfert</h2>
     <p>Vos données ne sont stockées que sur cet appareil. Exportez régulièrement une sauvegarde (dossiers + fichiers), par exemple vers votre Drive.</p>
     <div class="row gap wrap"><button class="btn primary" data-a="backup">⬇️ Exporter une sauvegarde complète</button><label class="btn">⬆️ Restaurer une sauvegarde<input type="file" accept=".json,application/json" hidden data-restore></label>
-    <button class="btn" data-a="demo">Charger un dossier d’exemple</button></div></section>
-  <section class="card"><h2>ℹ️ À propos</h2><p>CoproVente — application libre et gratuite (licence MIT) pour les agents et mandataires immobiliers. Contenus métier issus des guides pratiques de ${COPRO_ASSISTANCE.nom}. Informations générales : adaptez toujours au bien, à la copropriété et aux demandes de l’étude notariale.</p>
+    </div></section>
+  <section class="card"><h2>🧪 Base de test</h2><p>Remplit l’application avec des données entièrement fictives (prospects, acquéreurs, estimations, biens à chaque étape, mandats, visites, ventes, dossier copropriété complet) pour découvrir ou présenter l’outil. Vos propres données sont conservées.</p>
+    <div class="row gap wrap"><button class="btn primary" data-a="demoAll">Charger la base de test</button><button class="btn danger" data-a="demoClear">Supprimer les données d’exemple</button></div></section>
+  <section class="card"><h2>ℹ️ À propos</h2><p>CoproVente — application libre et gratuite pour les agents et mandataires immobiliers, proposée par ${COPRO_ASSISTANCE.nom}. Licence GNU GPL v3 avec conditions supplémentaires : les mentions ${COPRO_ASSISTANCE.nom} doivent être conservées dans toute copie ou version modifiée (fichier LICENSE). Ce programme est fourni sans aucune garantie. Informations générales : adaptez toujours au bien, à la copropriété et aux demandes de l’étude notariale.</p>
     <p class="right"><button class="btn danger small" data-a="wipe">Effacer toutes les données de cet appareil</button></p></section>`;
 }
 
@@ -416,6 +420,8 @@ const ACT = {
   editTpl(el) { editTpl(el.dataset.id); },
   saveTpl(el) {
     const id = el.dataset.id, t = { titre: $('#t_titre').value.trim() || 'Sans titre', canal: $('#t_canal').value, sujet: $('#t_sujet').value, corps: $('#t_corps').value };
+    const orig = TEMPLATES.find(x => x.id === id);
+    if (orig && /Copro-Assistance/i.test(orig.corps) && !/Copro-Assistance/i.test(t.corps)) return toast('La mention de Copro-Assistance doit être conservée dans ce modèle.', 'err');
     if (el.dataset.custom) {
       const list = App.settings.customTemplates, i = list.findIndex(x => x.id === id);
       if (i >= 0) list[i] = { ...list[i], ...t }; else list.push({ id: 'c_' + uid(), ...t });

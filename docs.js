@@ -40,7 +40,7 @@ table{border-collapse:collapse;width:100%;margin:8px 0}td,th{border:1px solid #b
 .sig{display:flex;gap:24px;margin-top:28px}.sig div{flex:1;border:1px solid #999;min-height:120px;padding:8px;font-size:12px}
 .small{font-size:11px;color:#444}.box{border:1px solid #0b1f3a;padding:10px 12px;margin:10px 0;background:#f6f8fb}
 @media print{body{margin:0}}`;
-function docShell(title, body) { return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${DOC_CSS}</style></head><body>${body}</body></html>`; }
+function docShell(title, body) { return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${DOC_CSS}</style></head><body>${body}<p class="small" style="margin-top:24px;border-top:1px solid #ccc;padding-top:6px">${esc(BRAND.docPied)}</p></body></html>`; }
 function printHtml(html) {
   const f = document.createElement('iframe');
   f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';

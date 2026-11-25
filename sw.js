@@ -1,6 +1,6 @@
 /* Service worker : l'application fonctionne hors ligne une fois chargée. */
-const CACHE = 'coprovente-v5';
-const SHELL = ['./', 'index.html', 'app.css', 'config.js', 'data.js', 'store.js', 'app.js', 'docs.js', 'pages.js', 'crm.js', 'gen.js', 'sim.js', 'aidocs.js', 'flows.js', 'icon.svg', 'manifest.webmanifest'];
+const CACHE = 'coprovente-v6';
+const SHELL = ['./', 'index.html', 'app.css', 'brand.js', 'config.js', 'data.js', 'store.js', 'app.js', 'docs.js', 'pages.js', 'crm.js', 'gen.js', 'sim.js', 'aidocs.js', 'courriers.js', 'demo.js', 'flows.js', 'icon.svg', 'manifest.webmanifest'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

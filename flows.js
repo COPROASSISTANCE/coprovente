@@ -303,48 +303,6 @@ window.addEventListener('beforeunload', e => { if (App.profilDirty) { e.preventD
   });
 })();
 
-/* ---------- Données d'exemple ---------- */
-function demoAll() {
-  const T = today();
-  if (!App.dossiers.some(d => (d.copro.nom || '').includes('exemple'))) demo();
-  const mk = (s) => { const c = newContact(s); App.crm.contacts.push(c); return c; };
-  const A = [['Mme', 'Lucie', 'Henry', '7 rue Vauban', 'contact', -1, 'Recommandation'], ['M.', 'Paul', 'Blanc', '18 rue de Créqui', 'a_contacter', 0, 'Pige / boîtage'],
-    ['M. et Mme', '', 'Rousseau', '33 rue Garibaldi', 'rdv', 2, 'Portail / site'], ['M.', 'Hugo', 'Morel', '9 rue Juliette Récamier', 'projet', 0, 'Ancien client'], ['Mme', 'Anne', 'Fontaine', '26 rue Bugeaud', 'sans_suite', null, 'Réseaux sociaux']];
-  A.forEach(([civ, prenom, nom, adr, st, n, o], i) => mk({ civ, prenom, nom, tel: '06 00 00 00 1' + i, email: nom.toLowerCase() + '@exemple.fr', origine: o, vend: { ...newContact().vend, statut: st, bienAdresse: adr, bienVille: 'Lyon', maturite: ['tiede', 'froid', 'chaud', 'tiede', 'froid'][i], motif: 'Donnée fictive' },
-    next: { date: n == null ? '' : addDays(T, n), action: ['appeler', 'appeler', 'rdv', 'estimation', 'appeler'][i], note: '' }, echanges: i < 4 ? [{ id: uid(), date: addDays(T, -6 - i), canal: 'appel', resume: 'Premier échange (fictif)', resultat: 'Joint' }] : [] }));
-  const acq = [['M.', 'Karim', 'Caron', 280000, 'accord'], ['Mme', 'Julie', 'Lucas', 320000, 'simulation'], ['M.', 'Marc', 'Mercier', 250000, 'comptant']].map(([civ, prenom, nom, b, f], i) =>
-    mk({ civ, prenom, nom, tel: '06 00 00 00 2' + i, email: nom.toLowerCase() + '@exemple.fr', roles: { vendeur: false, acquereur: true }, acq: { ...newContact().acq, budget: b, financement: f, secteurs: 'Lyon 3e, 6e', criteres: 'T3, balcon' }, next: { date: addDays(T, i - 1), action: 'appeler', note: 'Suite visite' } }));
-  // Bien en estimation + estimations
-  const pe = mk({ civ: 'Mme', prenom: 'Claire', nom: 'Perrin', tel: '06 00 00 00 30', email: 'perrin@exemple.fr', origine: 'Recommandation', vend: { ...newContact().vend, statut: 'client', bienAdresse: '11 rue Tête d’Or', bienVille: 'Lyon' }, next: { date: addDays(T, 1), action: 'appeler', note: 'Décision sur l’estimation' } });
-  const de = bienFromContact(pe, 'estimation'); Object.assign(de.bien, { surface: 72, pieces: 3, etage: '4', annee: 1965, dpe: 'D', ges: 'C' }); Object.assign(de.copro, { nbLots: 40, charges: 1900, procedure: 'non' });
-  App.crm.estimations.push(newEstimation({ contactId: pe.id, dossierId: de.id, dateDemande: addDays(T, -20), dateVisite: addDays(T, -15), visiteFaite: true, restitPrevue: addDays(T, -8), restitRealisee: addDays(T, -8), relance: addDays(T, -1), prixBas: 330000, prixHaut: 355000, prixReco: 345000, prixAttendu: 370000, retour: 'hesite',
-    rendu: { ...newEstimation().rendu, contexte: 'Projet de mutation à l’automne (fictif).', pointsForts: 'Traversant\nProche du parc\nCave', pointsAttention: 'Pas d’ascenseur', etat: 'Bon état', delai: '2 à 3 mois', comparables: [{ adresse: 'Rue Tête d’Or (secteur)', surface: 70, prix: 340000, statut: 'Vendu' }] } }));
-  const pl = mk({ civ: 'M.', prenom: 'Louis', nom: 'Leroy', tel: '06 00 00 00 31', vend: { ...newContact().vend, statut: 'client', bienAdresse: '15 rue Sully', bienVille: 'Lyon' }, next: { date: addDays(T, 3), action: 'appeler', note: '' } });
-  const dl = bienFromContact(pl, 'estimation');
-  App.crm.estimations.push(newEstimation({ contactId: pl.id, dossierId: dl.id, dateDemande: addDays(T, -9), dateVisite: addDays(T, -4), visiteFaite: true, restitPrevue: addDays(T, 2) }));
-  // Biens en commercialisation (dont l'exemple copro)
-  App.dossiers.forEach(d => ensureDossier(d));
-  const ex = App.dossiers.find(d => (d.copro.nom || '').includes('exemple'));
-  if (ex) { ex.phase = 'commercialisation'; Object.assign(ex.com, { prixLancement: 289000, prixActuel: 279000, dateEntree: addDays(T, -40), dernierBilan: addDays(T, -20), demandes: 11, offres: 0, historiquePrix: [{ date: addDays(T, -40), prix: 289000, motif: 'Prix de lancement' }, { date: addDays(T, -12), prix: 279000, motif: 'Ajustement après bilan' }] });
-    ex.mandat.statut = 'actif'; ex.com.annonce.atouts = ['Traversant', 'Balcon / terrasse', 'Cave', 'Parking']; ex.com.annonce.etat = 'Bon état';
-    const vend = mk({ civ: 'Mme', prenom: 'Claire', nom: 'Martin', tel: '06 00 00 00 01', email: 'claire.martin@exemple.fr', vend: { ...newContact().vend, statut: 'client' }, next: { date: '', action: 'bilan', note: '' } }); ex.vendeurs[0].contactId = vend.id; ex.acquereurs = []; }
-  const dc = newDossier({ phase: 'commercialisation' }); Object.assign(dc.bien, { adresse: '5 avenue Foch', ville: 'Lyon', type: 'Appartement', surface: 95, pieces: 4, dpe: 'C', ges: 'C' });
-  Object.assign(dc.mandat, { prix: 398000, honoraires: 16000, type: 'semi', statut: 'actif', date: addDays(T, -75), duree: 3, numero: 'EX-21' }); Object.assign(dc.com, { prixLancement: 398000, dateEntree: addDays(T, -70), dernierBilan: addDays(T, -35), demandes: 3 });
-  const vm = mk({ civ: 'M.', prenom: 'Pierre', nom: 'Moreau', tel: '06 00 00 00 40', vend: { ...newContact().vend, statut: 'client' }, next: { date: '', action: 'bilan', note: '' } }); dc.vendeurs = [personFromContact(vm)]; dc.copro.nom = 'Copropriété (exemple)'; App.dossiers.push(dc); saveDossier(dc, true);
-  // Vente en cours + ventes réalisées
-  const dv = newDossier({ phase: 'compromis' }); Object.assign(dv.bien, { adresse: '40 rue Ney', ville: 'Lyon' }); Object.assign(dv.mandat, { prix: 228000, honoraires: 10500, statut: 'actif', date: addDays(T, -90) });
-  Object.assign(dv.vente, { offreMontant: 222000, offreAcceptee: addDays(T, -30), compromisRealise: addDays(T, -18), origine: 'Portail / site' }); Object.assign(dv.dates, { compromis: addDays(T, -18), pret: addDays(T, -2), acte: addDays(T, 50) });
-  dv.pieces.etat_date = { s: 'D', dd: addDays(T, -10), qui: 'Syndic' }; dv.vendeurs[0] = { ...newPerson(), civ: 'Mme', nom: 'Fournier' }; dv.acquereurs = [personFromContact(acq[2])]; dv.copro.nom = 'Copropriété (exemple)'; App.dossiers.push(dv); saveDossier(dv, true);
-  [[-1, 245000, 11500, 'Recommandation'], [-3, 312000, 14800, 'Portail / site'], [-6, 189000, 9500, 'Pige / boîtage']].forEach(([m, prix, hon, o], i) => { const d = newDossier({ phase: 'acte' }); const acte = addMonths(T, m);
-    Object.assign(d.bien, { adresse: ['8 rue Paul Bert', '21 cours Vitton', '3 place Sathonay'][i], ville: 'Lyon' }); Object.assign(d.mandat, { prix, honoraires: hon, date: addMonths(acte, -4), statut: 'termine' });
-    Object.assign(d.vente, { offreMontant: prix, acteRealise: acte, honoFacture: hon, honoEncaisse: i ? hon : '', honoEncaisseDate: i ? acte : '', origine: o, merci: true, avis: i === 1 }); d.dates.acte = acte; d.copro.nom = 'Copropriété (exemple)'; App.dossiers.push(d); saveDossier(d, true); });
-  // Visites
-  const com = App.dossiers.filter(d => d.phase === 'commercialisation');
-  [[-30, 0, 3, ['Luminosité', 'Emplacement'], ['Prix'], 'cher', 'reflexion', true], [-22, 1, 2, ['Agencement'], ['Travaux à prévoir'], 'correct', 'non', true], [-9, 2, 3, ['Calme', 'Extérieur'], ['Prix', 'Étage / ascenseur'], 'cher', '2e', true],
-    [-2, 0, '', [], [], '', '', false], [0, 1, '', [], [], '', '', false]].forEach(([n, q, int, aime, obj, prix, suite, done], i) => {
-    const t = new Date(); t.setDate(t.getDate() + n); t.setHours(n === 0 ? 18 : 11, 0, 0, 0); const quand = new Date(t - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
-    App.crm.visites.push(newVisite({ dossierId: com[i % com.length].id, acquereurId: acq[q].id, quand, statut: n < 0 ? 'realisee' : 'confirmee', interet: String(int), aime, objections: obj, prix, suite, crFait: done, commentaire: done ? 'Donnée fictive' : '' })); });
-  App.dossiers.forEach(d => saveDossier(d, true)); saveCrm(true); location.hash = '#/'; rerender(); toast('Données d’exemple chargées (fictives).');
-}
+/* Données d'exemple : voir demo.js */
 
 boot();
