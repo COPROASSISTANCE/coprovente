@@ -10,7 +10,9 @@ Les contenus métier sont issus des guides pratiques de [Copro-Assistance](https
 
 | Module | Ce qu'il fait |
 |---|---|
-| **Tableau de bord** | Dossiers actifs, échéances (mandat, rétractation, prêt, acte, validité des diagnostics), relances de pièces, prochaine action par dossier |
+| **Tableau de bord** | Vue d'ensemble graphique : prospection, estimations, mandats, biens en commercialisation, visites, ventes réalisées ; entonnoir d'activité, honoraires sur 12 mois, visites par semaine, mandats par type, tâches et échéances des 14 prochains jours |
+| **Prospection, estimations, visites** | Fiches prospects avec relances, estimations (fourchette, prix au m²) transformables en mandat en un clic, visites liées aux biens avec retours et intérêt |
+| **Mandats & ventes** | Liste des mandats filtrable par étape, échéances de mandat, historique des ventes et honoraires, objectif annuel |
 | **Parcours (timeline)** | 13 étapes de la prise de mandat à l'après-vente, avec tâches, conseils et actions en un clic. Les tâches liées à une pièce se cochent seules quand la pièce est reçue |
 | **Fiche** | Mandat, bien, lots et tantièmes, copropriété/syndic, vendeurs, acquéreurs, notaires, dates clés (calcul automatique de la fin du délai de rétractation, jours fériés compris) |
 | **Pièces** | Plus de 50 pièces types (vendeur, diagnostics, copropriété, acquéreur, transaction) avec statut, dates, exercice, validité des diagnostics. Glisser-déposer avec **classement automatique** d'après le nom du fichier |
@@ -49,7 +51,8 @@ app.css         styles (clair/sombre, mobile)
 store.js        stockage local (IndexedDB)
 app.js          cœur, tableau de bord, parcours, fiche, pièces, analyse
 docs.js         mails, offre, pré-état daté, notaire, ZIP
-pages.js        modèles, outils, guides, paramètres, import PDF, démarrage
+pages.js        modèles, outils, guides, paramètres, import PDF
+crm.js          tableau de bord, prospection, estimations, visites, mandats, ventes, profil
 sw.js, manifest installation et mode hors ligne
 ```
 Aucune compilation : modifiez un fichier, rechargez la page.

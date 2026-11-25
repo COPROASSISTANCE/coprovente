@@ -91,11 +91,7 @@ function viewGuides() {
 function viewParametres() {
   const s = { settings: true };
   return `<div class="page-head"><div><h1>Paramètres</h1><p class="muted">Tout est enregistré localement dans ce navigateur.</p></div></div>
-  <section class="card"><h2>👤 Mon profil</h2><div class="grid4">
-    ${field('Civilité', 'agent.civ', { ...s, options: ['', 'M.', 'Mme'] })}${field('Prénom', 'agent.prenom', s)}${field('Nom', 'agent.nom', s)}${field('Statut', 'agent.statut', s)}
-    ${field('Réseau / agence', 'agent.reseau', s)}${field('N° RSAC', 'agent.rsac', s)}${field('Carte pro (du titulaire)', 'agent.carte', { ...s, ph: 'CPI xxxx xxxx xxx xxx' })}${field('Téléphone', 'agent.tel', s)}
-    ${field('E-mail', 'agent.email', { ...s, type: 'email' })}${field('Adresse', 'agent.adresse', { ...s, cls: 'span3' })}
-    ${field('Signature des mails (laisser vide pour la générer)', 'agent.signature', { ...s, area: true, cls: 'span4', rows: 4, ph: signature() })}</div></section>
+  <section class="card row between wrap gap"><div><h2>👤 Mon profil</h2><p class="small muted">Nom, coordonnées, carte professionnelle, signature et objectif annuel.</p></div><a class="btn" href="#/profil">Modifier mon profil</a></section>
   <section class="card"><h2>💾 Sauvegarde & transfert</h2>
     <p>Vos données ne sont stockées que sur cet appareil. Exportez régulièrement une sauvegarde (dossiers + fichiers), par exemple vers votre Drive.</p>
     <div class="row gap wrap"><button class="btn primary" data-a="backup">⬇️ Exporter une sauvegarde complète</button><label class="btn">⬆️ Restaurer une sauvegarde<input type="file" accept=".json,application/json" hidden data-restore></label>
@@ -239,7 +235,7 @@ async function backup() {
   toast('Préparation de la sauvegarde…');
   const files = await Store.allFiles();
   const enc = await Promise.all(files.map(async f => ({ ...f, blob: undefined, data: await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f.blob); }) })));
-  const json = JSON.stringify({ app: 'CoproVente', version: 1, exportedAt: new Date().toISOString(), settings: App.settings, dossiers: App.dossiers, files: enc });
+  const json = JSON.stringify({ app: 'CoproVente', version: 1, exportedAt: new Date().toISOString(), settings: App.settings, dossiers: App.dossiers, crm: App.crm, files: enc });
   download(`CoproVente_sauvegarde_${today()}.json`, new Blob([json], { type: 'application/json' }));
 }
 async function restore(file) {
@@ -250,6 +246,7 @@ async function restore(file) {
     for (const d of data.dossiers) await Store.putDossier(d);
     for (const f of data.files) { const blob = await (await fetch(f.data)).blob(); delete f.data; await Store.putFile({ ...f, blob }); }
     if (data.settings) { App.settings = { ...structuredClone(DEFAULT_SETTINGS), ...data.settings }; saveSettings(); }
+    if (data.crm) { for (const k of ['prospects', 'estimations', 'visites']) { const ids = new Set((data.crm[k] || []).map(x => x.id)); App.crm[k] = App.crm[k].filter(x => !ids.has(x.id)).concat(data.crm[k] || []); } saveCrm(); }
     App.dossiers = await Store.allDossiers();
     toast('Sauvegarde restaurée ✔'); location.hash = '#/';  render();
   } catch (e) { toast(e.message, 'err'); }
@@ -461,7 +458,8 @@ function wire() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
   window.addEventListener('hashchange', () => { closeModal(); render().then(() => { const h = location.hash.split('#')[2]; if (h) { const n = document.getElementById(h); if (n) n.scrollIntoView({ block: 'center' }); } else scrollTo(0, 0); }); });
   $('#menuBtn').addEventListener('click', () => document.body.classList.toggle('nav-open'));
-  $$('.nav a').forEach(a => a.addEventListener('click', () => document.body.classList.remove('nav-open')));
+  $$('.sidebar a, .top-links a').forEach(a => a.addEventListener('click', () => document.body.classList.remove('nav-open')));
+  $('#navBack').addEventListener('click', () => document.body.classList.remove('nav-open'));
 }
 function applyBranding() {
   const C = typeof APP_CONFIG === 'object' ? APP_CONFIG : {};
@@ -478,6 +476,8 @@ async function boot() {
     const s = await Store.get('settings');
     if (s) App.settings = { ...structuredClone(DEFAULT_SETTINGS), ...s, agent: { ...DEFAULT_SETTINGS.agent, ...(s.agent || {}) } };
     App.dossiers = await Store.allDossiers();
+    const crm = await Store.get('crm');
+    if (crm) App.crm = { prospects: [], estimations: [], visites: [], ...crm };
   } catch (e) {
     $('#view').innerHTML = `<div class="card"><h2>Stockage indisponible</h2><p>Votre navigateur bloque le stockage local (navigation privée ?). ${esc(e.message)}</p></div>`;
     return;
@@ -487,4 +487,4 @@ async function boot() {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
-boot();
+/* boot() est appelé à la fin de crm.js (dernier script chargé) */

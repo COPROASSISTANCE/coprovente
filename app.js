@@ -280,7 +280,11 @@ function route() {
 }
 async function render() {
   const r = route();
-  $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.page === r.page || (r.page === 'd' && a.dataset.page === 'accueil')));
+  if (App.profilDirty && r.page !== 'profil') {
+    if (!confirmBox('Vous avez des modifications non enregistrées dans « Mon profil ». Quitter sans enregistrer ?')) { location.hash = '#/profil'; return; }
+    App.profilDirty = false;
+  }
+  $$('[data-page]').forEach(a => a.classList.toggle('active', a.dataset.page === r.page || (r.page === 'd' && a.dataset.page === 'mandats')));
   const v = $('#view');
   if (r.page === 'd') {
     const d = App.dossiers.find(x => x.id === r.id);
@@ -290,7 +294,11 @@ async function render() {
     v.innerHTML = viewDossier(d);
   } else {
     App.current = null;
-    v.innerHTML = ({ accueil: viewDashboard, modeles: viewModeles, outils: viewOutils, guides: viewGuides, parametres: viewParametres }[r.page] || viewDashboard)();
+    const pages = {
+      accueil: viewDashboard, prospection: () => viewEntity('prospects'), estimations: () => viewEntity('estimations'), visites: () => viewEntity('visites'),
+      mandats: () => viewMandats(r.id), ventes: viewVentes, profil: viewProfil, modeles: viewModeles, outils: viewOutils, guides: viewGuides, parametres: viewParametres,
+    };
+    v.innerHTML = (pages[r.page] || viewDashboard)();
   }
   document.title = (App.current ? dossierTitle(App.current) + ' — ' : '') + ((typeof APP_CONFIG === 'object' && APP_CONFIG.nom) || 'CoproVente');
 }
@@ -310,27 +318,6 @@ function rerender() {
 }
 
 /* ---------- Tableau de bord ---------- */
-function viewDashboard() {
-  const ds = App.dossiers.slice().sort((a, b) => b.updatedAt - a.updatedAt);
-  const actifs = ds.filter(d => !['acte', 'abandon'].includes(d.phase));
-  const ech = allEcheances().filter(e => daysUntil(e.date) <= 30);
-  const kpi = (n, l, c = '') => `<div class="kpi ${c}"><b>${n}</b><span>${l}</span></div>`;
-  const welcome = !App.settings.agent.nom ? `<div class="banner">👋 Bienvenue ! Commencez par renseigner <a href="#/parametres">votre profil</a> (il alimente vos signatures, offres et mails), puis créez votre premier dossier — ou <button class="link" data-a="demo">chargez un dossier d’exemple</button>.</div>` : '';
-  return `${welcome}
-  <div class="page-head"><div><h1>Mes ventes en copropriété</h1><p class="muted">${actifs.length} dossier(s) actif(s) · données stockées uniquement sur cet appareil</p></div>
-    <div class="row gap wrap"><button class="btn ghost" data-a="importPdf" data-kind="mandat">📄 Importer un mandat PDF</button><button class="btn primary" data-a="newDossier">＋ Nouveau dossier</button></div></div>
-  <div class="kpis">${kpi(actifs.length, 'Dossiers actifs')}${kpi(ds.filter(d => d.phase === 'offre').length, 'Offres / pré-compromis')}${kpi(ds.filter(d => d.phase === 'compromis').length, 'Compromis signés')}${kpi(ech.filter(e => daysUntil(e.date) < 0).length, 'Échéances dépassées', ech.some(e => daysUntil(e.date) < 0) ? 'alert' : '')}</div>
-  <div class="grid2">
-    <section class="card"><h2>⏰ Échéances & relances (30 jours)</h2>${ech.length ? `<ul class="ech">${ech.slice(0, 14).map(e => {
-      const n = daysUntil(e.date); return `<li class="${n < 0 ? 'late' : n <= 7 ? 'soon' : ''}"><a href="#/d/${e.d.id}/${e.kind === 'relance' ? 'pieces' : e.kind === 'ped' ? 'ped' : 'parcours'}"><span class="when">${n < 0 ? 'Dépassé de ' + -n + ' j' : n === 0 ? 'Aujourd’hui' : 'J-' + n}</span><span>${esc(e.label)}<small>${esc(dossierTitle(e.d))}</small></span></a></li>`;
-    }).join('')}</ul>` : '<p class="muted">Rien d’urgent. 👌</p>'}</section>
-    <section class="card"><h2>✅ Prochaines actions</h2>${actifs.length ? `<ul class="actions-list">${actifs.map(d => {
-      const n = nextTask(d); return n ? `<li><a href="#/d/${d.id}/parcours"><b>${esc(n.step.titre)}</b> — ${esc(n.task[1])}<small>${esc(dossierTitle(d))}</small></a></li>` : '';
-    }).join('')}</ul>` : '<p class="muted">Aucun dossier actif.</p>'}</section>
-  </div>
-  <h2 class="section-title">Dossiers</h2>
-  ${ds.length ? `<div class="cards">${ds.map(cardDossier).join('')}</div>` : `<div class="empty"><p>Aucun dossier pour l’instant.</p><button class="btn primary" data-a="newDossier">Créer mon premier dossier</button> <button class="btn ghost" data-a="demo">Voir un exemple</button></div>`}`;
-}
 function cardDossier(d) {
   const p = progress(d), ph = phaseDef(d.phase), cs = currentStep(d);
   return `<a class="dcard" href="#/d/${d.id}/parcours">

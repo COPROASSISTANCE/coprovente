@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CoproVente</title>
-<meta name="description" content="Le copilote gratuit des agents et mandataires immobiliers pour vendre en copropriété : parcours pas à pas, pièces, mails, offre d'achat, pré-état daté.">
+<meta name="description" content="Le copilote gratuit des agents et mandataires immobiliers : prospection, estimations, mandats, visites, ventes en copropriété.">
 <meta name="theme-color" content="#0b1f3a">
 <script>if (location.protocol !== 'file:') document.write('<link rel="manifest" href="manifest.webmanifest">');</script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -12,18 +12,36 @@
 </head>
 <body>
 <header class="topbar">
-  <button id="menuBtn" class="icon-btn menu" aria-label="Menu">☰</button>
+  <button id="menuBtn" class="icon-btn menu" aria-label="Ouvrir le menu">☰</button>
   <a href="#/" class="brand"><img id="brandLogo" src="icon.svg" alt="" width="28" height="28"><span id="brandName">Copro<b>Vente</b></span></a>
-  <nav class="nav" aria-label="Navigation principale">
-    <a href="#/" data-page="accueil">Tableau de bord</a>
-    <a href="#/modeles" data-page="modeles">Modèles de mails</a>
-    <a href="#/outils" data-page="outils">Outils</a>
-    <a href="#/guides" data-page="guides">Guides</a>
-    <a href="#/parametres" data-page="parametres">Paramètres</a>
+  <nav class="top-links" aria-label="Compte">
+    <a href="#/profil" data-page="profil">👤 <span>Mon profil</span></a>
+    <a href="#/parametres" data-page="parametres">⚙️ <span>Paramètres</span></a>
   </nav>
 </header>
-<main id="view" class="container"><p class="muted">Chargement…</p></main>
-<footer class="foot container">CoproVente · logiciel libre (MIT) · vos données restent sur cet appareil · contenus métier : guides pratiques <a href="https://www.copro-assistance.fr" target="_blank" rel="noopener">Copro-Assistance</a> · information générale, ne remplace pas un conseil personnalisé.</footer>
+<div class="layout">
+  <aside class="sidebar" aria-label="Navigation principale">
+    <nav class="side-nav">
+      <a href="#/" data-page="accueil"><i>📊</i>Tableau de bord</a>
+      <p class="side-title">Activité</p>
+      <a href="#/prospection" data-page="prospection"><i>🎯</i>Prospection</a>
+      <a href="#/estimations" data-page="estimations"><i>📐</i>Estimations</a>
+      <a href="#/mandats" data-page="mandats"><i>📝</i>Mandats & biens</a>
+      <a href="#/visites" data-page="visites"><i>🚪</i>Visites</a>
+      <a href="#/ventes" data-page="ventes"><i>🏆</i>Ventes réalisées</a>
+      <p class="side-title">Ressources</p>
+      <a href="#/modeles" data-page="modeles"><i>✉️</i>Modèles de mails</a>
+      <a href="#/outils" data-page="outils"><i>🧮</i>Outils</a>
+      <a href="#/guides" data-page="guides"><i>📚</i>Guides copropriété</a>
+    </nav>
+    <p class="side-foot">Données stockées uniquement sur cet appareil · logiciel libre (MIT)</p>
+  </aside>
+  <div id="navBack" class="nav-back"></div>
+  <div class="main">
+    <main id="view" class="container"><p class="muted">Chargement…</p></main>
+    <footer class="foot container">CoproVente · contenus métier : guides pratiques <a href="https://www.copro-assistance.fr" target="_blank" rel="noopener">Copro-Assistance</a> · information générale, ne remplace pas un conseil personnalisé.</footer>
+  </div>
+</div>
 <div id="modal" hidden></div>
 <div id="toasts" aria-live="polite"></div>
 <script src="config.js"></script>
@@ -32,5 +50,6 @@
 <script src="app.js"></script>
 <script src="docs.js"></script>
 <script src="pages.js"></script>
+<script src="crm.js"></script>
 </body>
 </html>
