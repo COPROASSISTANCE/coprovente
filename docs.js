@@ -174,7 +174,7 @@ function tabOffre(d) {
     ${field('Compromis souhaité avant le', 'offre.dateCompromis', { type: 'date', r: true })}${field('Acte souhaité avant le', 'offre.dateActe', { type: 'date', r: true })}
     ${field('Autres conditions', 'offre.autresConditions', { area: true, cls: 'span4', r: true, ph: 'ex. sous réserve de l’obtention d’un permis, de la vente d’un bien…' })}
     ${field('Observations', 'offre.obs', { area: true, cls: 'span4', r: true })}</div>
-    ${prix && hon ? `<p class="small">Net vendeur estimé : <b>${eur(prix - hon)}</b> (honoraires ${eur(hon)} ${d.mandat.charge === 'acquereur' ? 'à la charge de l’acquéreur' : 'à la charge du vendeur'}).</p>` : ''}
+    ${prix > hon && hon ? `<p class="small">Net vendeur estimé : <b>${eur(prix - hon)}</b> (honoraires ${eur(hon)} ${d.mandat.charge === 'acquereur' ? 'à la charge de l’acquéreur' : 'à la charge du vendeur'}).</p>` : ''}
   </section></div>
   <aside class="card sticky"><h2>Document</h2>
     <div class="row gap wrap"><button class="btn primary" data-a="offreDo" data-how="print">🖨️ Imprimer / PDF</button><button class="btn" data-a="offreDo" data-how="word">⬇️ Word</button>
@@ -192,7 +192,9 @@ function offreBody(d) {
   ${lotsTable(d)}
   <p>Appartenant à : ${esc(names(d.vendeurs) || '…')}. ${b.occupation === 'loue' ? 'Le bien est vendu loué.' : 'Le bien sera vendu libre de toute occupation au jour de l’acte authentique.'}</p>
   <h2>Prix</h2>
-  <div class="box">Prix proposé : <b>${eur(prix)}</b> (${esc(eurLettres(prix))}), honoraires d’agence inclus${hon ? ` de ${eur(hon)} ${d.mandat.charge === 'acquereur' ? 'à la charge de l’acquéreur' : 'à la charge du vendeur'}, soit un prix net vendeur de ${eur(prix - hon)}` : ''}.</div>
+  <div class="box">${prix > 0
+    ? `Prix proposé : <b>${eur(prix)}</b> (${esc(eurLettres(prix))}), honoraires d’agence inclus${hon ? ` de ${eur(hon)} ${d.mandat.charge === 'acquereur' ? 'à la charge de l’acquéreur' : 'à la charge du vendeur'}${prix > hon ? `, soit un prix net vendeur de ${eur(prix - hon)}` : ''}` : ''}.`
+    : `Prix proposé : <b>……………………… €</b> (en lettres : ……………………………………………… euros), honoraires d’agence inclus${hon ? ` de ${eur(hon)} ${d.mandat.charge === 'acquereur' ? 'à la charge de l’acquéreur' : 'à la charge du vendeur'}` : ''}.`}</div>
   <h2>Financement</h2><p>${esc(financementText(d)).replace(/^./, c => c.toUpperCase())}.${o.financement !== 'comptant' && o.conditionPret ? ` L’acquéreur s’engage à déposer ses demandes de prêt dans les meilleurs délais ; la condition suspensive devra être réalisée dans un délai de ${esc(o.delaiPret || 45)} jours à compter de la signature de l’avant-contrat.` : ''}</p>
   ${o.autresConditions ? `<h2>Autres conditions</h2><p>${esc(o.autresConditions).replace(/\n/g, '<br>')}</p>` : ''}
   <h2>Calendrier souhaité</h2><p>Signature de l’avant-contrat avant le ${fdate(o.dateCompromis)} ; réitération par acte authentique avant le ${fdate(o.dateActe)}${d.notaireA.nom ? ', en l’étude de ' + esc(d.notaireA.nom) + ' (notaire de l’acquéreur)' : ''}${d.notaireV.nom ? ', avec le concours de ' + esc(d.notaireV.nom) + ' (notaire du vendeur)' : ''}.</p>
@@ -200,8 +202,8 @@ function offreBody(d) {
   ${o.obs ? `<h2>Observations</h2><p>${esc(o.obs).replace(/\n/g, '<br>')}</p>` : ''}
   <h2>Informations de l’acquéreur</h2><p class="small">L’acquéreur reconnaît avoir été informé : que l’accord des parties sera régularisé par un avant-contrat (compromis ou promesse de vente) ; qu’il bénéficiera d’un délai de rétractation de dix jours (art. L.271-1 du CCH) ; qu’aucun versement ne peut être exigé ni accepté avant la signature de l’avant-contrat (art. 1589-1 du Code civil) ; que les documents et informations relatifs à la copropriété, dont les informations financières prévues par l’art. L.721-2 du CCH, lui seront remis au plus tard lors de la signature de l’avant-contrat.</p>
   <p>Fait à ${esc(o.lieu || '…')}, le ${fdate(o.date)}, en ${acqs.length + 1} exemplaires.</p>
-  <div class="sig"><div><b>L’acquéreur</b><br><span class="small">Signature précédée de la mention manuscrite « Bon pour offre d’achat au prix de ${esc(eur(prix))} »</span></div>
-  <div><b>Acceptation du vendeur</b><br><span class="small">Date et signature précédées de la mention « Bon pour acceptation de l’offre au prix de ${esc(eur(prix))} »</span></div></div>
+  <div class="sig"><div><b>L’acquéreur</b><br><span class="small">Signature précédée de la mention manuscrite « Bon pour offre d’achat au prix de ${prix > 0 ? esc(eur(prix)) : '………… €'} »</span></div>
+  <div><b>Acceptation du vendeur</b><br><span class="small">Date et signature précédées de la mention « Bon pour acceptation de l’offre au prix de ${prix > 0 ? esc(eur(prix)) : '………… €'} »</span></div></div>
   <p class="small">Offre établie par ${esc([App.settings.agent.prenom, App.settings.agent.nom].join(' ').trim() || 'l’agent')} — mandat n° ${esc(d.mandat.numero || '…')} du ${fdate(d.mandat.date)}.</p>`;
 }
 
@@ -266,7 +268,10 @@ function tabPed(d) {
   const ok = (cond, txt, link) => `<li class="${cond ? 'okc' : 'soon'}">${cond ? '✔' : '⚠️'} ${txt}${!cond && link ? ` — <a href="${link}">compléter</a>` : ''}</li>`;
   const st = id => (d.pieces[id] || {}).s || '', recu = id => ['R', 'P', 'V'].includes(st(id));
   const vendMail = (d.vendeurs.find(p => p.email) || {}).email;
-  return `${pedCompareCard(d)}
+  const E = d.entites || {}, ent = E.etat === 'plusieurs'
+    ? `<div class="ai-box"><b>⚠️ Plusieurs entités juridiques : ${entitesN(d)} pré-états datés à prévoir</b><p class="small">Syndicat principal / secondaire, ASL, AFUL… Un pré-état daté (et plus tard un état daté) par entité. <a href="#/d/${d.id}/analyse">Voir l’analyse copro</a></p></div>`
+    : !E.etat || E.etat === '?' ? `<p class="small muted">⚠️ Vérifiez que le bien ne dépend pas d’un syndicat principal / secondaire, d’une ASL ou d’une AFUL : <a href="#/d/${d.id}/analyse">point de contrôle dans l’analyse copro</a>.</p>` : '';
+  return `${ent}${pedCompareCard(d)}
   <section class="card ca-box"><h2>📦 Demander le pré-état daté à ${COPRO_ASSISTANCE.nom}</h2>
     <p class="small">Mail pré-rempli à copier-coller vers <b>${COPRO_ASSISTANCE.email}</b> · 📞 <a href="tel:${COPRO_ASSISTANCE.tel.replace(/\s/g, '')}">${COPRO_ASSISTANCE.tel}</a></p>
     <div class="seg big">${[['extranet', 'Option 1 · Accès extranet'], ['documents', 'Option 2 · Envoi des documents']].map(([v, l]) => `<button class="${mode === v ? 'on' : ''}" data-a="pedMode" data-v="${v}">${l}</button>`).join('')}</div>

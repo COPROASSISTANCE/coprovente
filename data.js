@@ -443,6 +443,17 @@ Concernant l’appel de fonds du [période] relatif aux lots {{lots}} de la copr
 Je vous remercie par avance.
 
 {{signature}}` },
+  { id: 'syndic_entites', canal: 'syndic', titre: 'Syndicat principal / secondaire, ASL, AFUL : confirmation',
+    sujet: 'Lots {{lots}} — {{copro_nom}} — entités juridiques concernées',
+    corps: `Madame, Monsieur,
+
+Dans le cadre de la vente des lots {{lots}} de la copropriété {{copro_nom}} ({{adresse_complete}}), pourriez-vous me confirmer si ces lots relèvent, en plus du syndicat des copropriétaires que vous gérez, d’une autre entité disposant de sa propre comptabilité ou personnalité juridique : syndicat principal ou secondaire, union de syndicats, ASL, AFUL ou autre structure ?
+
+Dans l’affirmative, merci de m’indiquer pour chacune son nom, son numéro d’immatriculation le cas échéant et les coordonnées de son gestionnaire, afin d’anticiper les pré-états datés et états datés correspondants.
+
+Je vous remercie par avance.
+
+{{signature}}` },
   { id: 'syndic_annexe', canal: 'syndic', titre: 'Question sur les annexes comptables',
     sujet: 'Annexes comptables {{copro_nom}} — demande d’explication',
     corps: `Madame, Monsieur,

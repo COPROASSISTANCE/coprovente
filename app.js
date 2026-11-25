@@ -58,6 +58,7 @@ function ensureDossier(d) {
   d.com = Object.assign({ prixLancement: '', prixActuel: '', historiquePrix: [], dateEntree: '', datePublication: '', supports: [], demandes: 0, offres: 0, dernierEchangeVendeur: '', dernierBilan: '', prochainBilan: '', actions: [], annonce: { titre: '', texte: '', atouts: [], ton: 'commercial' }, notes: '' }, d.com || {});
   d.vente = Object.assign({ offreMontant: '', offreDate: '', offreAcceptee: '', compromisRealise: '', pretRealise: '', acteRealise: '', honoFacture: '', honoFactureDate: '', honoEncaisse: '', honoEncaisseDate: '', origine: '', blocage: '', merci: false, avis: false, nouvelles: '' }, d.vente || {});
   d.mandat = Object.assign({ statut: d.phase === 'estimation' ? 'preparation' : 'actif', dateEffet: '', repartition: '', echeances: [], historique: [] }, d.mandat || {});
+  d.entites = Object.assign({ etat: '', sources: {}, liste: [], notes: '' }, d.entites || {});
   d.mandatsHisto = d.mandatsHisto || [];
   d.estimationId = d.estimationId || '';
   return d;
@@ -250,6 +251,7 @@ function signauxText(d) {
   const pres = SIGNAUX.filter(s => (d.signaux[s.id] || {}).etat === 'oui').map(s => {
     const x = d.signaux[s.id]; return s.label + (x.montant ? ' — ' + eur(x.montant) : '') + (x.source ? ' (source : ' + x.source + ')' : '');
   });
+  if (d.entites && d.entites.etat === 'plusieurs') pres.push(`Le bien dépend de plusieurs entités juridiques (${entitesN(d)}) : prévoir autant de pré-états datés et d’états datés`);
   d.alertesLibres.filter(a => a.label).forEach(a => pres.push(a.label + (a.source ? ' (source : ' + a.source + ')' : '')));
   return pres.length ? bullets(pres) : '- Aucun point particulier relevé à ce stade.';
 }
@@ -409,7 +411,7 @@ function personBlock(listPath, i, p, title) {
 }
 function tabFiche(d) {
   const prix = num(d.mandat.prix), hon = num(d.mandat.honoraires);
-  const pct = prix && hon ? (d.mandat.charge === 'acquereur' ? (hon / (prix - hon) * 100) : (hon / prix * 100)).toFixed(2) : null;
+  const pct = prix > hon && hon ? (d.mandat.charge === 'acquereur' ? (hon / (prix - hon) * 100) : (hon / prix * 100)).toFixed(2) : null;
   return `<div class="row between"><p class="muted">Ces informations pré-remplissent les mails, l’offre d’achat, la demande de pré-état daté et la note au notaire.</p>
     <button class="btn small" data-a="importPdf" data-kind="mandat" data-into="1">📄 Compléter depuis un PDF</button></div>
   <section class="card"><h2>Mandat</h2><div class="grid4">
@@ -534,7 +536,31 @@ function tabAnalyse(d) {
     ${d.appels.length ? d.appels.map((a, i) => appelCard(d, a, i)).join('') : '<p class="muted">Aucune fiche. Ajoutez le dernier appel de fonds du vendeur.</p>'}</section>
   ${pvCard(d)}
   ${annexesCard(d)}
-  <section class="card"><h2>📣 Les mentions obligatoires pour l’annonce en copropriété</h2><p class="small muted">Générées à partir de la fiche (nombre de lots, charges courantes annuelles, procédure, DPE).</p><button class="btn small" data-a="annonceCopro">Générer les mentions</button></section>`;
+  <section class="card"><h2>📣 Les mentions obligatoires pour l’annonce en copropriété</h2><p class="small muted">Générées à partir de la fiche (nombre de lots, charges courantes annuelles, procédure, DPE).</p><button class="btn small" data-a="annonceCopro">Générer les mentions</button></section>
+  ${entitesCard(d)}`;
+}
+const ENTITE_TYPES = [['principal', 'Syndicat principal'], ['secondaire', 'Syndicat secondaire'], ['union', 'Union de syndicats'], ['asl', 'ASL'], ['aful', 'AFUL'], ['autre', 'Autre']];
+const ENTITE_SOURCES = [
+  ['rnic', '1. Registre national des copropriétés', 'Recherchez l’adresse : plusieurs immatriculations, ou la mention « syndicat principal » / « syndicat secondaire ».', 'https://www.registre-coproprietes.gouv.fr/'],
+  ['comptes', '2. Comptes de la copropriété (annexes comptables)', 'Cherchez une charge ou une participation versée à un syndicat principal, une union, une ASL ou une AFUL.'],
+  ['appels', '3. Appels de fonds du vendeur', 'Deux appels émis par des entités différentes, ou une ligne « quote-part ASL / AFUL / syndicat principal ».'],
+  ['syndic', '4. En dernier recours : demander au syndic', 'Mail type « Syndicat principal / secondaire, ASL, AFUL : confirmation ».'],
+];
+function entitesN(d) { return d.entites.etat === 'plusieurs' ? 1 + d.entites.liste.length : 1; }
+function entitesCard(d) {
+  const E = d.entites, n = entitesN(d);
+  return `<section class="card"><h2>🏛️ Syndicat principal / secondaire, ASL, AFUL : une ou plusieurs entités ?</h2>
+    <p class="small muted">Si le bien dépend de plusieurs entités juridiques distinctes (chacune avec sa propre comptabilité, personnalité juridique ou immatriculation), il faudra <b>un pré-état daté et un état daté par entité</b>. À anticiper le plus tôt possible.</p>
+    <div class="seg small">${[['', 'Non vérifié'], ['une', 'Une seule copropriété'], ['plusieurs', 'Plusieurs entités'], ['?', 'À vérifier']].map(([v, l]) => `<button class="${E.etat === v ? 'on' : ''}" data-a="entitesEtat" data-v="${v}">${l}</button>`).join('')}</div>
+    <h3>Où le vérifier, dans l’ordre</h3>
+    ${ENTITE_SOURCES.map(([id, t, h, url]) => `<div class="sig"><div class="row between wrap gap"><span><b>${t}</b><br><span class="small muted">${h}</span></span>
+      <span class="row gap">${url ? `<a class="btn small ghost" href="${url}" target="_blank" rel="noopener">🔎 Ouvrir le registre</a>` : ''}${id === 'syndic' ? '<button class="btn small ghost" data-a="compose" data-tpl="syndic_entites">✉️ Mail au syndic</button>' : ''}
+      ${field('Vérifié', `entites.sources.${id}`, { check: true, r: true })}</span></div></div>`).join('')}
+    ${E.etat === 'plusieurs' ? `<h3>Entités concernées en plus du syndicat des copropriétaires</h3>
+      ${E.liste.map((x, i) => `<div class="sig on"><div class="grid4">${field('Type', `entites.liste.${i}.type`, { options: ENTITE_TYPES, r: true })}${field('Nom', `entites.liste.${i}.nom`)}${field('N° d’immatriculation', `entites.liste.${i}.immat`)}${field('Gestionnaire / contact', `entites.liste.${i}.gestion`)}</div><button class="icon-btn" data-a="delEntite" data-i="${i}">🗑</button></div>`).join('')}
+      <button class="btn small" data-a="addEntite">＋ Ajouter une entité</button>
+      <div class="ai-box"><b>⚠️ À prévoir : ${n} pré-états datés et ${n} états datés</b><p class="small">Un par entité (syndicat des copropriétaires${E.liste.length ? ' + ' + esc(E.liste.map(x => (ENTITE_TYPES.find(t => t[0] === x.type) || ['', 'entité'])[1] + (x.nom ? ' « ' + x.nom + ' »' : '')).join(' + ')) : ''}). Informez le vendeur et le notaire dès maintenant.</p></div>` : ''}
+    ${field('Notes', 'entites.notes', { area: true })}</section>`;
 }
 function signalRow(d, s) {
   const x = d.signaux[s.id] || {};
