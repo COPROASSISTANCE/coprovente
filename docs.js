@@ -97,7 +97,7 @@ function tabMails(d) {
     <div class="grid4">
       <div class="field span2"><span>Contacts du fil « ${CANAUX.find(x => x.id === c).label} »</span><div class="readout">${em.length ? em.map(esc).join(', ') : '<span class="muted">Aucun e-mail : renseignez la fiche ou ajoutez ci-contre.</span>'}</div></div>
       ${field('Adresses supplémentaires', `mails.${c}.to`, { ph: 'a@x.fr, b@y.fr', r: true })}
-      <div class="field"><span>Gmail</span><div class="readout">${connected ? '🟢 connecté' + (Gmail.email ? ' — ' + esc(Gmail.email) : '') : '⚪ non connecté — <a href="#/parametres">connecter</a>'}</div></div>
+      <div class="field"><span>Gmail</span>${connected ? `<div class="readout">🟢 ${esc(Gmail.email || 'connecté')}</div>` : gmailBox(true)}</div>
       ${field('Recherche Gmail de ce fil', `mails.${c}.query`, { cls: 'span3', ph: defaultQuery(d, c) || 'from:… OR subject:…', help: 'Laissez vide pour utiliser automatiquement les contacts ci-dessus. Syntaxe de recherche Gmail.' })}
       <div class="field"><span>&nbsp;</span><button class="btn ${connected ? 'primary' : ''}" data-a="syncCanal">🔄 Synchroniser</button><small>${M.lastSync ? 'Dernière synchro : ' + fdatetime(M.lastSync) : ''}</small></div>
     </div>
@@ -119,7 +119,7 @@ function msgCard(m) {
 function findMsg(d, id) { for (const c of CANAUX) { const m = d.mails[c.id].messages.find(x => x.id === id); if (m) return { m, c: c.id }; } return {}; }
 
 async function syncCanal(d, c) {
-  if (!Gmail.isConnected()) { toast('Connectez d’abord Gmail (Paramètres).', 'err'); location.hash = '#/parametres'; return; }
+  if (!Gmail.isConnected()) { toast('Cliquez d’abord sur « Connecter mon Gmail ».', 'err'); return; }
   const q = d.mails[c].query || defaultQuery(d, c);
   if (!q) { toast('Aucun contact ni recherche pour ce fil.', 'err'); return; }
   toast('Synchronisation en cours…');

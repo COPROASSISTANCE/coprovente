@@ -1,0 +1,24 @@
+COPROVENTE — COMMENT DÉMARRER
+==============================
+
+1. LANCER L'APPLICATION
+   - Windows : double-cliquez sur « Lancer CoproVente.bat »
+   - Mac     : double-cliquez sur « Lancer CoproVente (Mac).command »
+               (si le Mac refuse : clic droit > Ouvrir > Ouvrir)
+
+   L'application s'ouvre dans votre navigateur (http://localhost:8080).
+   Laissez la petite fenêtre noire ouverte pendant l'utilisation.
+
+2. CONNECTER VOTRE GMAIL
+   Cliquez sur « Connecter mon Gmail » (tableau de bord ou Paramètres),
+   choisissez votre compte Google et acceptez. C'est tout.
+
+3. VOS DONNÉES
+   Vos dossiers et fichiers restent sur votre ordinateur, dans le navigateur.
+   Utilisez toujours le même navigateur, et faites régulièrement
+   Paramètres > « Exporter une sauvegarde complète ».
+
+Astuce : vous pouvez aussi ouvrir index.html directement (double-clic) :
+tout fonctionne, sauf la connexion Gmail.
+
+Personnaliser (nom, couleurs, logo, modèles de mails) : voir PERSONNALISER.md

@@ -96,10 +96,10 @@ function viewParametres() {
     ${field('Réseau / agence', 'agent.reseau', s)}${field('N° RSAC', 'agent.rsac', s)}${field('Carte pro (du titulaire)', 'agent.carte', { ...s, ph: 'CPI xxxx xxxx xxx xxx' })}${field('Téléphone', 'agent.tel', s)}
     ${field('E-mail', 'agent.email', { ...s, type: 'email' })}${field('Adresse', 'agent.adresse', { ...s, cls: 'span3' })}
     ${field('Signature des mails (laisser vide pour la générer)', 'agent.signature', { ...s, area: true, cls: 'span4', rows: 4, ph: signature() })}</div></section>
-  <section class="card"><h2>✉️ Connexion Gmail (optionnelle)</h2>
-    <p>Permet de <b>synchroniser jusqu’à 5 fils par bien</b> (notaire, syndic, vendeur, acquéreur, autre) et de <b>créer des brouillons</b> avec pièces jointes. L’application n’envoie jamais de mail à votre place : vous relisez et envoyez depuis Gmail. Le jeton reste dans ce navigateur.</p>
-    <div class="grid4">${field('Client ID OAuth Google', 'gmailClientId', { ...s, cls: 'span3', ph: 'xxxxxxxx.apps.googleusercontent.com', help: 'Créé gratuitement dans Google Cloud Console — voir le guide GMAIL.md fourni avec l’application.' })}
-    <div class="field"><span>État</span>${Gmail.isConnected() ? `<div class="readout">🟢 ${esc(Gmail.email || 'connecté')}</div><button class="btn small" data-a="gmailOff">Déconnecter</button>` : `<button class="btn primary" data-a="gmailOn">Connecter Gmail</button>`}</div></div>
+  <section class="card"><h2>✉️ Connexion Gmail</h2>
+    <p>Connectez <b>votre</b> boîte Gmail pour <b>synchroniser jusqu’à 5 fils par bien</b> (notaire, syndic, vendeur, acquéreur, autre) et <b>créer des brouillons</b> avec pièces jointes. L’application n’envoie jamais de mail à votre place, et l’accès reste dans ce navigateur.</p>
+    ${gmailBox()}
+    <details class="small"><summary>Avancé : utiliser mon propre identifiant Google</summary><div class="grid4">${field('Client ID OAuth Google', 'gmailClientId', { ...s, cls: 'span4', ph: 'xxxxxxxx.apps.googleusercontent.com', help: 'Facultatif — remplace l’identifiant fourni avec l’application. Voir GMAIL.md.' })}</div></details>
     <p class="small muted">Sans connexion, tout fonctionne quand même : « Ouvrir dans Gmail » pré-remplit un message, et vous pouvez coller les mails reçus dans chaque fil.</p></section>
   <section class="card"><h2>💾 Sauvegarde & transfert</h2>
     <p>Vos données ne sont stockées que sur cet appareil. Exportez régulièrement une sauvegarde (dossiers + fichiers), par exemple vers votre Drive.</p>
@@ -107,6 +107,15 @@ function viewParametres() {
     <button class="btn" data-a="demo">Charger un dossier d’exemple</button></div></section>
   <section class="card"><h2>ℹ️ À propos</h2><p>CoproVente — application libre et gratuite (licence MIT) pour les agents et mandataires immobiliers. Contenus métier issus des guides pratiques de ${COPRO_ASSISTANCE.nom}. Informations générales : adaptez toujours au bien, à la copropriété et aux demandes de l’étude notariale.</p>
     <p class="right"><button class="btn danger small" data-a="wipe">Effacer toutes les données de cet appareil</button></p></section>`;
+}
+
+/* ---------- Connexion Gmail ---------- */
+const gmailClientId = () => (App.settings.gmailClientId || '').trim() || ((typeof APP_CONFIG === 'object' && APP_CONFIG.gmailClientId) || '').trim();
+function gmailBox(compact) {
+  if (Gmail.isConnected()) return `<div class="row gap wrap"><span class="readout">🟢 Gmail connecté : <b>${esc(Gmail.email || '')}</b></span><button class="btn small" data-a="gmailOff">Déconnecter</button></div>`;
+  if (location.protocol === 'file:') return `<div class="warn">Pour connecter Gmail, fermez cette page et ouvrez l’application avec <b>« Lancer CoproVente »</b> (double-clic sur le fichier dans le dossier de l’application).</div>`;
+  if (!gmailClientId()) return `<div class="warn">Aucun identifiant Google n’est configuré dans cette copie de l’application (fichier <code>config.js</code>, voir GMAIL.md).</div>`;
+  return `<button class="btn primary${compact ? ' small' : ''}" data-a="gmailOn">🔗 Connecter mon Gmail</button>`;
 }
 
 /* ---------- Import PDF (mandat / offre) ---------- */
@@ -433,7 +442,7 @@ const ACT = {
   },
   resetTpl(el) { delete App.settings.tplOverrides[el.dataset.id]; saveSettings(); closeModal(); rerender(); },
   delTpl(el) { if (!confirmBox('Supprimer ce modèle ?')) return; App.settings.customTemplates = App.settings.customTemplates.filter(t => t.id !== el.dataset.id); saveSettings(); closeModal(); rerender(); },
-  async gmailOn() { try { const e = await Gmail.connect(App.settings.gmailClientId.trim()); toast('Gmail connecté : ' + e); rerender(); } catch (e) { toast(e.message, 'err'); } },
+  async gmailOn() { try { const e = await Gmail.connect(gmailClientId()); toast('Gmail connecté : ' + e); rerender(); } catch (e) { toast(e.message, 'err'); } },
   gmailOff() { Gmail.disconnect(); toast('Gmail déconnecté'); rerender(); },
   backup,
   async wipe() {

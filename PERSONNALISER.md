@@ -1,35 +1,25 @@
 # Installer et personnaliser CoproVente
 
-Ce guide s'adresse aux agents et mandataires, **sans connaissance technique**. Comptez 15 minutes pour avoir votre propre application en ligne, connectée à votre Gmail.
+Ce guide s'adresse aux agents et mandataires, **sans connaissance technique**.
 
 ---
 
-## 1. Obtenir votre propre copie (5 min)
+## 1. Installer (2 min)
 
-1. Créez un compte gratuit sur https://github.com (si vous n'en avez pas).
-2. Ouvrez le modèle CoproVente : https://github.com/COPROASSISTANCE/coprovente, puis cliquez sur le bouton vert **« Use this template » › « Create a new repository »**.
-3. Donnez un nom (ex. `coprovente`), laissez **Public**, puis **Create repository**.
+1. Téléchargez le ZIP : https://github.com/COPROASSISTANCE/coprovente/archive/refs/heads/main.zip
+2. Décompressez-le où vous voulez (ex. *Documents › CoproVente*). Ce dossier est **votre copie** : modifiez-la librement.
+3. Double-cliquez sur **« Lancer CoproVente.bat »** (Windows) ou **« Lancer CoproVente (Mac).command »** (Mac).
+   L'application s'ouvre dans le navigateur à l'adresse `http://localhost:8080`. Laissez la petite fenêtre noire ouverte.
 
-Cette copie **vous appartient** : vous pouvez la modifier librement, cela ne touche pas l'original.
+> Vos dossiers et fichiers restent **dans votre navigateur, sur votre ordinateur**. Utilisez toujours le même navigateur et exportez régulièrement une sauvegarde (Paramètres).
 
-## 2. La mettre en ligne (2 min)
+## 2. Connecter votre Gmail (30 s)
 
-1. Dans votre copie : **Settings › Pages**.
-2. *Source* : **Deploy from a branch** ; *Branch* : **main**, dossier **/ (root)** › **Save**.
-3. Patientez 1 à 2 minutes : votre adresse s'affiche en haut de la page, du type
-   `https://votre-nom.github.io/coprovente/`
+Cliquez sur **« Connecter mon Gmail »**, choisissez votre compte et acceptez. Détails : [GMAIL.md](GMAIL.md).
 
-Ouvrez-la, ajoutez-la à vos favoris, ou installez-la comme une application (icône d'installation dans la barre d'adresse du navigateur, ou « Ajouter à l'écran d'accueil » sur téléphone).
+## 3. Personnaliser
 
-> Vos dossiers et fichiers restent **dans votre navigateur**, jamais sur GitHub. Pensez à exporter une sauvegarde régulièrement (Paramètres).
-
-## 3. Brancher votre Gmail (10 min, facultatif)
-
-Suivez [GMAIL.md](GMAIL.md). Dans « Origines JavaScript autorisées », indiquez `https://votre-nom.github.io`.
-
-## 4. Personnaliser
-
-Pour modifier un fichier sur GitHub : ouvrez-le dans votre copie, cliquez sur le **crayon ✏️**, modifiez, puis **Commit changes**. Le site se met à jour en 1 à 2 minutes (rechargez la page avec Ctrl+F5).
+Ouvrez le fichier avec le **Bloc-notes** (clic droit › Ouvrir avec › Bloc-notes) ou TextEdit sur Mac, modifiez, enregistrez, puis rechargez la page de l'application (F5).
 
 ### Nom, couleurs, logo → `config.js`
 ```js
@@ -38,7 +28,7 @@ couleurPrincipale: '#c0392b',
 couleurBandeau: '#2c3e50',
 logo: 'mon-logo.png',
 ```
-Pour le logo : **Add file › Upload files**, déposez votre image, puis indiquez son nom dans `config.js`.
+Pour le logo : copiez votre image dans le dossier de l'application, puis indiquez son nom dans `config.js`.
 
 ### Contenu métier → `data.js`
 Le fichier est organisé en blocs, chacun commenté :
@@ -56,13 +46,12 @@ Règles simples pour ne rien casser :
 - modifiez le texte **entre les apostrophes** `'…'` ou les accents graves `` `…` `` ;
 - dans un texte entre apostrophes, écrivez l'apostrophe française `’` (et non `'`) ;
 - gardez les virgules en fin de ligne ;
-- si la page devient blanche après une modification, revenez à la version précédente : *History* › ouvrez la version d'avant › *Revert*.
+- **avant de modifier, faites une copie du fichier** : si la page devient blanche, remettez la copie.
+
+Les modèles de mails se modifient aussi directement dans l'application (menu *Modèles de mails*), sans toucher aux fichiers.
 
 ### Se faire aider par une IA
-Vous pouvez demander à Claude (ou à un autre assistant) : *« Voici le fichier data.js de mon application CoproVente, ajoute une pièce “Attestation d'assurance habitation” dans la catégorie vendeur »* et coller le résultat dans GitHub.
+Demandez par exemple à Claude : *« Voici le fichier data.js de mon application CoproVente, ajoute une pièce “Attestation d'assurance habitation” dans la catégorie vendeur »*, puis remplacez le fichier par la version proposée.
 
-## 5. Récupérer les améliorations du modèle
-Quand le modèle original évolue, vous pouvez recopier les fichiers modifiés dans votre copie (*Add file › Upload files*). Si vous avez personnalisé `data.js` ou `config.js`, ne remplacez que les autres fichiers.
-
-## Sans GitHub
-Téléchargez le ZIP (*Code › Download ZIP*), décompressez-le et double-cliquez sur `index.html`. Tout fonctionne sauf la connexion Gmail. Pour l'activer en local sous Windows : clic droit sur `serve.ps1` › *Exécuter avec PowerShell*, puis ouvrez http://localhost:8080.
+## 4. Mettre à jour
+Quand une nouvelle version sort, téléchargez le nouveau ZIP et remplacez les fichiers de votre dossier, **sauf** `config.js` et `data.js` si vous les avez personnalisés. Vos dossiers ne sont pas touchés (ils sont dans le navigateur). Gardez le même dossier et le même navigateur.

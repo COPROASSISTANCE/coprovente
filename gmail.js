@@ -27,8 +27,8 @@ const Gmail = (() => {
     });
   }
   async function connect(clientId) {
-    if (!clientId) throw new Error('Renseignez d’abord votre « Client ID » Google dans les paramètres.');
-    if (location.protocol === 'file:') throw new Error('La connexion Gmail nécessite que l’application soit servie en http(s) (voir README : serve.ps1 ou GitHub Pages).');
+    if (location.protocol === 'file:') throw new Error('Ouvrez l’application avec « Lancer CoproVente » pour connecter Gmail.');
+    if (!clientId) throw new Error('Aucun identifiant Google configuré (config.js — voir GMAIL.md).');
     await loadGis();
     await new Promise((res, rej) => {
       const client = google.accounts.oauth2.initTokenClient({

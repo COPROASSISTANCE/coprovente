@@ -30,19 +30,15 @@ Les contenus métier sont issus des guides pratiques de [Copro-Assistance](https
 - Gmail est optionnel ; le jeton d'accès reste dans l'onglet et l'application **n'envoie jamais de mail** : elle crée des brouillons que l'agent relit et envoie.
 - Sauvegarde/restauration complète en un fichier JSON (Paramètres).
 
-**▶ Essayer en ligne : https://coproassistance.github.io/coprovente/**
+## ⬇️ Installer sur votre ordinateur (2 minutes)
 
-## Obtenir votre propre application
+1. **[Télécharger CoproVente (ZIP)](https://github.com/COPROASSISTANCE/coprovente/archive/refs/heads/main.zip)** et décompresser le dossier où vous voulez (ex. *Documents*).
+2. Double-cliquer sur **« Lancer CoproVente.bat »** (Windows) ou **« Lancer CoproVente (Mac).command »** (Mac). L'application s'ouvre dans votre navigateur.
+3. Cliquer sur **« Connecter mon Gmail »** et choisir votre compte.
 
-👉 **[Guide pas à pas : installer et personnaliser](PERSONNALISER.md)**
+C'est votre copie : vous pouvez la modifier librement (nom, couleurs, logo dans `config.js` ; étapes, pièces et modèles de mails dans `data.js`) — voir **[PERSONNALISER.md](PERSONNALISER.md)**.
 
-En résumé : bouton **« Use this template »** en haut de cette page › votre copie › *Settings › Pages › Deploy from branch (main, root)*. Vous obtenez votre propre adresse en ligne, que vous pouvez modifier librement (nom, couleurs, logo dans `config.js` ; contenu métier dans `data.js`) et connecter à votre Gmail.
-
-### En local (Windows)
-```powershell
-powershell -ExecutionPolicy Bypass -File serve.ps1
-```
-puis ouvrez http://localhost:8080. (Ouvrir `index.html` directement fonctionne aussi, sauf la connexion Gmail.)
+Vous pouvez aussi l'essayer en ligne sans rien installer : https://coproassistance.github.io/coprovente/
 
 ## Connexion Gmail
 Voir [GMAIL.md](GMAIL.md).
