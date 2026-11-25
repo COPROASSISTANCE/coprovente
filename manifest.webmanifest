@@ -1,0 +1,12 @@
+{
+  "name": "CoproVente — vendre en copropriété",
+  "short_name": "CoproVente",
+  "description": "Le copilote des agents et mandataires immobiliers pour les ventes en copropriété.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#0b1f3a",
+  "lang": "fr",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
