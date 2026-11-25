@@ -7,7 +7,7 @@ Ce guide s'adresse aux agents et mandataires, **sans connaissance technique**. C
 ## 1. Obtenir votre propre copie (5 min)
 
 1. Créez un compte gratuit sur https://github.com (si vous n'en avez pas).
-2. Ouvrez la page du modèle CoproVente sur GitHub, puis cliquez sur le bouton vert **« Use this template » › « Create a new repository »**.
+2. Ouvrez le modèle CoproVente : https://github.com/COPROASSISTANCE/coprovente, puis cliquez sur le bouton vert **« Use this template » › « Create a new repository »**.
 3. Donnez un nom (ex. `coprovente`), laissez **Public**, puis **Create repository**.
 
 Cette copie **vous appartient** : vous pouvez la modifier librement, cela ne touche pas l'original.

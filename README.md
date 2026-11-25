@@ -30,6 +30,8 @@ Les contenus métier sont issus des guides pratiques de [Copro-Assistance](https
 - Gmail est optionnel ; le jeton d'accès reste dans l'onglet et l'application **n'envoie jamais de mail** : elle crée des brouillons que l'agent relit et envoie.
 - Sauvegarde/restauration complète en un fichier JSON (Paramètres).
 
+**▶ Essayer en ligne : https://coproassistance.github.io/coprovente/**
+
 ## Obtenir votre propre application
 
 👉 **[Guide pas à pas : installer et personnaliser](PERSONNALISER.md)**
